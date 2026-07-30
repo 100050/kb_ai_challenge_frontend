@@ -5,6 +5,7 @@ import { App } from './app/App';
 import './styles/tokens.css';
 import './styles/global.css';
 import './styles/landing.css';
+import './styles/analysis-form.css';
 
 const root = document.getElementById('root');
 
