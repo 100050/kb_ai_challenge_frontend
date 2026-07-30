@@ -38,8 +38,8 @@ const emptyValues: FinancialGoalsFormValues = {
   minimumEmergencyFund: '',
 };
 
-function wonToManwon(value: number) {
-  return String(value / 10_000);
+function wonToManwon(value: number | null) {
+  return value === null ? '' : String(value / 10_000);
 }
 
 function valuesToFinancialGoals(
@@ -53,6 +53,33 @@ function valuesToFinancialGoals(
     recoverable_existing_rental_deposit:
       Number(values.recoverableDeposit) * 10_000,
   };
+}
+
+function valuesToPartialFinancialGoals(
+  values: FinancialGoalsFormValues,
+): Partial<FinancialGoals> {
+  const goals: Partial<FinancialGoals> = {};
+  const fields: {
+    formKey: keyof FinancialGoalsFormValues;
+    apiKey: keyof FinancialGoals;
+  }[] = [
+    { formKey: 'targetMonthlySavings', apiKey: 'target_monthly_savings' },
+    { formKey: 'monthlySafetyMargin', apiKey: 'monthly_safety_margin' },
+    { formKey: 'availableCash', apiKey: 'available_cash' },
+    { formKey: 'minimumEmergencyFund', apiKey: 'minimum_emergency_fund' },
+    {
+      formKey: 'recoverableDeposit',
+      apiKey: 'recoverable_existing_rental_deposit',
+    },
+  ];
+
+  for (const { apiKey, formKey } of fields) {
+    if (values[formKey] !== '') {
+      goals[apiKey] = Number(values[formKey]) * 10_000;
+    }
+  }
+
+  return goals;
 }
 
 function validate(
@@ -89,6 +116,7 @@ export function FinancialGoalsPage({
   const [isSaving, setIsSaving] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [saveError, setSaveError] = useState('');
+  const [saveMessage, setSaveMessage] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
@@ -153,12 +181,38 @@ export function FinancialGoalsPage({
     setValues((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: undefined }));
     setSaveError('');
+    setSaveMessage('');
   };
 
   const retryLoad = () => {
     setIsLoading(true);
     setLoadError('');
     setReloadKey((key) => key + 1);
+  };
+
+  const saveDraft = async () => {
+    const partialGoals = valuesToPartialFinancialGoals(values);
+
+    if (!analysisId || Object.keys(partialGoals).length === 0) {
+      setSaveError('임시 저장할 내용을 먼저 입력해 주세요.');
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError('');
+    setSaveMessage('');
+    try {
+      await updateFinancialGoals(analysisId, partialGoals);
+      setSaveMessage('지금까지 입력한 내용을 저장했습니다.');
+    } catch (error) {
+      setSaveError(
+        error instanceof ApiError
+          ? error.message
+          : '자산 정보를 임시 저장하지 못했습니다.',
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -200,7 +254,7 @@ export function FinancialGoalsPage({
           isSaving
             ? '저장 중...'
             : analysisId
-              ? '서버에 안전하게 저장됩니다'
+              ? undefined
               : '입력 화면 미리보기'
         }
       />
@@ -378,6 +432,19 @@ export function FinancialGoalsPage({
                       {saveError}
                     </p>
                   ) : null}
+                  {saveMessage ? (
+                    <p className="form-navigation__success" role="status">
+                      {saveMessage}
+                    </p>
+                  ) : null}
+                  <button
+                    className="button button--secondary"
+                    disabled={isSaving}
+                    onClick={saveDraft}
+                    type="button"
+                  >
+                    임시 저장
+                  </button>
                   <button
                     className="button button--primary"
                     disabled={isSaving}

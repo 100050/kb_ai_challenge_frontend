@@ -50,9 +50,11 @@ describe('ResultsPage', () => {
     await user.click(screen.getByRole('tab', { name: '매물 3' }));
 
     const table = screen.getByRole('table', {
-      name: '가격 비교에 사용된 전체 실거래 표본 3개',
+      name: '전체 실거래 표본 3개',
     });
-    expect(within(table).getAllByRole('row')).toHaveLength(4);
+    expect(screen.getByText('부산시 동구 수정동')).toBeInTheDocument();
+    expect(within(table).getAllByRole('row')).toHaveLength(5);
+    expect(within(table).getByText('내 매물')).toBeInTheDocument();
 
     const depositSort = within(table).getByRole('button', {
       name: /보증금/,
@@ -114,6 +116,30 @@ describe('ResultsPage', () => {
           ],
           generated_at: '2026-07-24T03:31:00Z',
         }),
+      ),
+      http.get(
+        `${apiBaseUrl}/analyses/${analysisId}/housing-plans/43b49e66-0fa2-4e0d-aee6-2f6cbc827290`,
+        () =>
+          HttpResponse.json({
+            analysis_id: analysisId,
+            property_id: '43b49e66-0fa2-4e0d-aee6-2f6cbc827290',
+            name: '역삼 원룸',
+            address: '서울특별시 강남구 역삼동',
+            property_type: 'officetel',
+            legal_dong_code: null,
+            exclusive_area_m2: 20,
+            housing_type: 'monthly_rent',
+            deposit: 10_000_000,
+            monthly_rent: 700_000,
+            maintenance_fee: 100_000,
+            utilities: 50_000,
+            transportation_cost: 80_000,
+            loan_plan: null,
+            additional_costs: null,
+            is_complete: true,
+            created_at: '2026-07-23T03:21:00Z',
+            updated_at: '2026-07-23T03:25:00Z',
+          }),
       ),
     );
 

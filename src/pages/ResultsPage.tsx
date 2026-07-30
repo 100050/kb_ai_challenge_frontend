@@ -4,7 +4,10 @@ import { ApiError } from '../api/httpClient';
 import { AnalysisHeader } from '../components/layout/AnalysisHeader';
 import { StepSidebar } from '../components/layout/StepSidebar';
 import { HomeIcon, TargetIcon, WalletIcon } from '../components/ui/Icons';
-import { getAnalysisResult } from '../features/analysis/api/analysisApi';
+import {
+  getAnalysisResult,
+  getHousingPlan,
+} from '../features/analysis/api/analysisApi';
 import type {
   AnalysisCandidateResult,
   AnalysisResult,
@@ -12,6 +15,7 @@ import type {
   InitialFundsStatus,
   MonthlyCashFlowStatus,
   PriceComparisonSample,
+  HousingPlan,
 } from '../features/analysis/model/analysisTypes';
 
 interface ResultsPageProps {
@@ -201,6 +205,63 @@ const previewResult: AnalysisResult = {
   generated_at: '2026-07-29T00:00:00Z',
 };
 
+const previewHousingPlans: Record<string, HousingPlan> = {
+  'preview-property-1': {
+    property_id: 'preview-property-1',
+    name: '매물 1',
+    address: '서울특별시 강남구 역삼동',
+    property_type: 'officetel',
+    legal_dong_code: null,
+    exclusive_area_m2: 20,
+    housing_type: 'monthly_rent',
+    deposit: 10_000_000,
+    monthly_rent: 700_000,
+    maintenance_fee: 100_000,
+    utilities: 50_000,
+    transportation_cost: 80_000,
+    loan_plan: null,
+    additional_costs: null,
+    is_complete: true,
+    updated_at: '2026-07-29T00:00:00Z',
+  },
+  'preview-property-2': {
+    property_id: 'preview-property-2',
+    name: '매물 2',
+    address: '서울특별시 관악구 신림동',
+    property_type: 'officetel',
+    legal_dong_code: null,
+    exclusive_area_m2: 24,
+    housing_type: 'jeonse',
+    deposit: 80_000_000,
+    monthly_rent: 0,
+    maintenance_fee: 100_000,
+    utilities: 50_000,
+    transportation_cost: 80_000,
+    loan_plan: null,
+    additional_costs: null,
+    is_complete: true,
+    updated_at: '2026-07-29T00:00:00Z',
+  },
+  'preview-property-3': {
+    property_id: 'preview-property-3',
+    name: '매물 3',
+    address: '부산시 동구 수정동',
+    property_type: 'multi_family',
+    legal_dong_code: null,
+    exclusive_area_m2: 60,
+    housing_type: 'monthly_rent',
+    deposit: 18_000_000,
+    monthly_rent: 770_000,
+    maintenance_fee: 80_000,
+    utilities: 40_000,
+    transportation_cost: 50_000,
+    loan_plan: null,
+    additional_costs: null,
+    is_complete: true,
+    updated_at: '2026-07-29T00:00:00Z',
+  },
+};
+
 function formatWon(value: number) {
   const manwon = value / 10_000;
   return `${manwon.toLocaleString('ko-KR', {
@@ -292,10 +353,11 @@ const sampleColumns: {
 ];
 
 interface PriceSampleTableProps {
+  property: HousingPlan;
   samples: PriceComparisonSample[];
 }
 
-function PriceSampleTable({ samples }: PriceSampleTableProps) {
+function PriceSampleTable({ property, samples }: PriceSampleTableProps) {
   const [sortKey, setSortKey] =
     useState<SampleSortKey>('equivalent_monthly_cost');
   const [direction, setDirection] = useState<SortDirection>('ascending');
@@ -329,6 +391,11 @@ function PriceSampleTable({ samples }: PriceSampleTableProps) {
 
   return (
     <div className="sample-table-wrap">
+      <div className="sample-table__property">
+        <span>내 매물</span>
+        <strong>{property.name ?? '이름 없는 매물'}</strong>
+        <p>{property.address ?? '주소 미입력'}</p>
+      </div>
       <table className="sample-table">
         <caption>
           전체 실거래 표본 {samples.length}개
@@ -356,6 +423,17 @@ function PriceSampleTable({ samples }: PriceSampleTableProps) {
           </tr>
         </thead>
         <tbody>
+          <tr className="sample-table__my-property">
+            <td>{formatWon(property.deposit ?? 0)}</td>
+            <td>{formatWon(property.monthly_rent ?? 0)}</td>
+            <td>
+              {property.exclusive_area_m2 === null
+                ? '—'
+                : `${property.exclusive_area_m2.toLocaleString('ko-KR')}㎡`}
+            </td>
+            <td>내 매물</td>
+            <td>—</td>
+          </tr>
           {sortedSamples.map((sample) => (
             <tr
               key={`${sample.contract_date}-${sample.deposit}-${sample.monthly_rent}`}
@@ -424,6 +502,9 @@ export function ResultsPage({
   const [result, setResult] = useState<AnalysisResult | null>(
     analysisId ? null : previewResult,
   );
+  const [housingPlans, setHousingPlans] = useState<
+    Record<string, HousingPlan>
+  >(analysisId ? {} : previewHousingPlans);
   const [activeId, setActiveId] = useState(
     analysisId ? '' : previewResult.candidates[0].property_id,
   );
@@ -441,6 +522,28 @@ export function ResultsPage({
       .then((response) => {
         setResult(response);
         setActiveId(response.candidates[0]?.property_id ?? '');
+        return Promise.allSettled(
+          response.candidates.map((candidate) =>
+            getHousingPlan(
+              analysisId,
+              candidate.property_id,
+              controller.signal,
+            ),
+          ),
+        );
+      })
+      .then((settledPlans) => {
+        setHousingPlans(
+          settledPlans.reduce<Record<string, HousingPlan>>(
+            (plans, settledPlan) => {
+              if (settledPlan.status === 'fulfilled') {
+                plans[settledPlan.value.property_id] = settledPlan.value;
+              }
+              return plans;
+            },
+            {},
+          ),
+        );
       })
       .catch((loadError: unknown) => {
         if (
@@ -720,8 +823,10 @@ export function ResultsPage({
                 ) : activeCandidate.price_appropriateness.status ===
                     'available' &&
                   activeCandidate.price_appropriateness.comparison_mode ===
-                    'individual_samples' ? (
+                    'individual_samples' &&
+                  housingPlans[activeCandidate.property_id] ? (
                   <PriceSampleTable
+                    property={housingPlans[activeCandidate.property_id]}
                     samples={activeCandidate.price_appropriateness.samples}
                   />
                 ) : (

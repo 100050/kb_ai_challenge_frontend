@@ -10,6 +10,7 @@ import {
   deleteHousingPlan,
   getHousingPlan,
   getHousingPlans,
+  startEvaluation,
   updateHousingPlan,
 } from '../features/analysis/api/analysisApi';
 import type {
@@ -27,7 +28,9 @@ interface HousingPlansPageProps {
 interface HousingFormValues {
   propertyId: string;
   name: string;
-  address: string;
+  city: string;
+  district: string;
+  neighborhood: string;
   propertyType: string;
   exclusiveArea: string;
   housingType: HousingType | '';
@@ -48,7 +51,9 @@ function createEmptyPlan(index: number): HousingFormValues {
   return {
     propertyId: `local-${Date.now()}-${index}`,
     name: '',
-    address: '',
+    city: '',
+    district: '',
+    neighborhood: '',
     propertyType: '',
     exclusiveArea: '',
     housingType: '',
@@ -71,10 +76,16 @@ function wonToManwon(value: number | null) {
 }
 
 function planToValues(plan: HousingPlan): HousingFormValues {
+  const [city = '', district = '', neighborhood = ''] = (
+    plan.address ?? ''
+  ).trim().split(/\s+/);
+
   return {
     propertyId: plan.property_id,
     name: plan.name ?? '',
-    address: plan.address ?? '',
+    city,
+    district,
+    neighborhood,
     propertyType: plan.property_type ?? '',
     exclusiveArea:
       plan.exclusive_area_m2 === null ? '' : String(plan.exclusive_area_m2),
@@ -107,7 +118,7 @@ function manwon(value: string) {
 function valuesToRequest(values: HousingFormValues) {
   return {
     name: values.name,
-    address: values.address,
+    address: [values.city, values.district, values.neighborhood].join(' '),
     property_type: values.propertyType || null,
     exclusive_area_m2: optionalNumber(values.exclusiveArea),
     housing_type: values.housingType || null,
@@ -126,6 +137,39 @@ function valuesToRequest(values: HousingFormValues) {
       moving_cost: manwon(values.movingCost),
       other_move_in_cost: manwon(values.otherMoveInCost),
     },
+  };
+}
+
+function valuesToPartialRequest(values: HousingFormValues) {
+  const request: ReturnType<typeof valuesToRequest> = valuesToRequest(values);
+
+  return {
+    ...(values.name ? { name: request.name } : {}),
+    ...(values.city && values.district && values.neighborhood
+      ? { address: request.address }
+      : {}),
+    ...(values.propertyType ? { property_type: request.property_type } : {}),
+    ...(values.exclusiveArea
+      ? { exclusive_area_m2: request.exclusive_area_m2 }
+      : {}),
+    ...(values.housingType ? { housing_type: request.housing_type } : {}),
+    ...(values.deposit ? { deposit: request.deposit } : {}),
+    ...(values.monthlyRent || values.housingType === 'jeonse'
+      ? { monthly_rent: request.monthly_rent }
+      : {}),
+    ...(values.maintenanceFee
+      ? { maintenance_fee: request.maintenance_fee }
+      : {}),
+    ...(values.utilities ? { utilities: request.utilities } : {}),
+    ...(values.transportationCost
+      ? { transportation_cost: request.transportation_cost }
+      : {}),
+    ...(values.depositLoanAmount || values.annualInterestRate
+      ? { loan_plan: request.loan_plan }
+      : {}),
+    ...(values.brokerageFee || values.movingCost || values.otherMoveInCost
+      ? { additional_costs: request.additional_costs }
+      : {}),
   };
 }
 
@@ -171,6 +215,7 @@ export function HousingPlansPage({
   const [isLoading, setIsLoading] = useState(Boolean(analysisId));
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
+  const [saveMessage, setSaveMessage] = useState('');
 
   useEffect(() => {
     if (!analysisId) {
@@ -182,8 +227,11 @@ export function HousingPlansPage({
     getHousingPlans(analysisId, controller.signal)
       .then(async ({ housing_plans: summaries }) => {
         if (summaries.length === 0) {
-          setPlans([]);
-          setActiveId('');
+          const createdPlan = planToValues(
+            await createHousingPlan(analysisId),
+          );
+          setPlans([createdPlan]);
+          setActiveId(createdPlan.propertyId);
           return;
         }
 
@@ -230,6 +278,7 @@ export function HousingPlansPage({
       ),
     );
     setError('');
+    setSaveMessage('');
   };
 
   const addPlan = async () => {
@@ -244,8 +293,12 @@ export function HousingPlansPage({
         : createEmptyPlan(plans.length + 1);
       setPlans((current) => [...current, nextPlan]);
       setActiveId(nextPlan.propertyId);
-    } catch {
-      setError('후보 매물을 추가하지 못했습니다.');
+    } catch (addError) {
+      setError(
+        addError instanceof ApiError
+          ? addError.message
+          : '후보 매물을 추가하지 못했습니다.',
+      );
     }
   };
 
@@ -306,8 +359,14 @@ export function HousingPlansPage({
       setError('후보 매물을 추가해 주세요.');
       return;
     }
-    if (!activePlan.name || !activePlan.address || !activePlan.housingType) {
-      setError('매물 이름, 주소와 계약 유형을 입력해 주세요.');
+    if (
+      !activePlan.name ||
+      !activePlan.city ||
+      !activePlan.district ||
+      !activePlan.neighborhood ||
+      !activePlan.housingType
+    ) {
+      setError('매물 이름, 시·구·동과 계약 유형을 입력해 주세요.');
       return;
     }
 
@@ -326,6 +385,7 @@ export function HousingPlansPage({
             plan.propertyId === savedValues.propertyId ? savedValues : plan,
           ),
         );
+        await startEvaluation(analysisId);
       }
       onNext();
     } catch (saveError) {
@@ -333,6 +393,45 @@ export function HousingPlansPage({
         saveError instanceof ApiError
           ? saveError.message
           : '후보 매물을 저장하지 못했습니다.',
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const saveDraft = async () => {
+    if (!analysisId || !activePlan) {
+      setError('임시 저장할 매물을 먼저 추가해 주세요.');
+      return;
+    }
+
+    const request = valuesToPartialRequest(activePlan);
+    if (Object.keys(request).length === 0) {
+      setError('임시 저장할 내용을 먼저 입력해 주세요.');
+      return;
+    }
+
+    setIsSaving(true);
+    setError('');
+    setSaveMessage('');
+    try {
+      const saved = await updateHousingPlan(
+        analysisId,
+        activePlan.propertyId,
+        request,
+      );
+      const savedValues = planToValues(saved);
+      setPlans((current) =>
+        current.map((plan) =>
+          plan.propertyId === savedValues.propertyId ? savedValues : plan,
+        ),
+      );
+      setSaveMessage('현재 매물의 입력 내용을 저장했습니다.');
+    } catch (saveError) {
+      setError(
+        saveError instanceof ApiError
+          ? saveError.message
+          : '후보 매물을 임시 저장하지 못했습니다.',
       );
     } finally {
       setIsSaving(false);
@@ -347,7 +446,7 @@ export function HousingPlansPage({
           isSaving
             ? '저장 중...'
             : analysisId
-              ? '서버에 안전하게 저장됩니다'
+              ? undefined
               : '입력 화면 미리보기'
         }
       />
@@ -425,11 +524,27 @@ export function HousingPlansPage({
                           value={activePlan.name}
                         />
                         <TextField
-                          id="property-address"
-                          label="주소"
-                          onChange={(value) => updateActive('address', value)}
-                          placeholder="도로명 또는 지번 주소"
-                          value={activePlan.address}
+                          id="property-city"
+                          label="시"
+                          onChange={(value) => updateActive('city', value)}
+                          placeholder="예: 부산시"
+                          value={activePlan.city}
+                        />
+                        <TextField
+                          id="property-district"
+                          label="구"
+                          onChange={(value) => updateActive('district', value)}
+                          placeholder="예: 동구"
+                          value={activePlan.district}
+                        />
+                        <TextField
+                          id="property-neighborhood"
+                          label="동"
+                          onChange={(value) =>
+                            updateActive('neighborhood', value)
+                          }
+                          placeholder="예: 수정동"
+                          value={activePlan.neighborhood}
                         />
                         <div className="form-field">
                           <label htmlFor="property-type">주택 유형</label>
@@ -639,6 +754,19 @@ export function HousingPlansPage({
                       {error}
                     </p>
                   ) : null}
+                  {saveMessage ? (
+                    <p className="form-navigation__success" role="status">
+                      {saveMessage}
+                    </p>
+                  ) : null}
+                  <button
+                    className="button button--secondary"
+                    disabled={isSaving}
+                    onClick={saveDraft}
+                    type="button"
+                  >
+                    임시 저장
+                  </button>
                   <button
                     className="button button--primary"
                     disabled={isSaving}

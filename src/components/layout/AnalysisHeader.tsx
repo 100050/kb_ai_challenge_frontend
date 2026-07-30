@@ -7,7 +7,7 @@ interface AnalysisHeaderProps {
 
 export function AnalysisHeader({
   onExit,
-  saveStatus = '서버에 안전하게 저장됩니다',
+  saveStatus,
 }: AnalysisHeaderProps) {
   return (
     <header className="analysis-header">
@@ -16,7 +16,7 @@ export function AnalysisHeader({
         <span>청년 주거 금융 도우미</span>
       </a>
       <div className="analysis-header__actions">
-        <span>{saveStatus}</span>
+        {saveStatus ? <span>{saveStatus}</span> : null}
         <button onClick={onExit} type="button">
           나가기
         </button>

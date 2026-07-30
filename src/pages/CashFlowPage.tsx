@@ -32,8 +32,8 @@ const emptyValues: CashFlowFormValues = {
   existingLoanPayment: '',
 };
 
-function wonToManwon(value: number) {
-  return String(value / 10_000);
+function wonToManwon(value: number | null) {
+  return value === null ? '' : String(value / 10_000);
 }
 
 function valuesToCashFlow(values: CashFlowFormValues): CashFlow {
@@ -44,6 +44,26 @@ function valuesToCashFlow(values: CashFlowFormValues): CashFlow {
     existing_loan_monthly_payment:
       Number(values.existingLoanPayment) * 10_000,
   };
+}
+
+function valuesToPartialCashFlow(
+  values: CashFlowFormValues,
+): Partial<CashFlow> {
+  const cashFlow: Partial<CashFlow> = {};
+
+  if (values.income !== '') {
+    cashFlow.after_tax_monthly_income = Number(values.income) * 10_000;
+  }
+  if (values.livingExpenses !== '') {
+    cashFlow.monthly_living_expenses_excluding_housing_and_transport =
+      Number(values.livingExpenses) * 10_000;
+  }
+  if (values.existingLoanPayment !== '') {
+    cashFlow.existing_loan_monthly_payment =
+      Number(values.existingLoanPayment) * 10_000;
+  }
+
+  return cashFlow;
 }
 
 function validate(values: CashFlowFormValues): CashFlowFormErrors {
@@ -78,6 +98,7 @@ export function CashFlowPage({
   const [isSaving, setIsSaving] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [saveError, setSaveError] = useState('');
+  const [saveMessage, setSaveMessage] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
@@ -137,6 +158,32 @@ export function CashFlowPage({
     setValues((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: undefined }));
     setSaveError('');
+    setSaveMessage('');
+  };
+
+  const saveDraft = async () => {
+    const partialCashFlow = valuesToPartialCashFlow(values);
+
+    if (!analysisId || Object.keys(partialCashFlow).length === 0) {
+      setSaveError('임시 저장할 내용을 먼저 입력해 주세요.');
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError('');
+    setSaveMessage('');
+    try {
+      await updateCashFlow(analysisId, partialCashFlow);
+      setSaveMessage('지금까지 입력한 내용을 저장했습니다.');
+    } catch (error) {
+      setSaveError(
+        error instanceof ApiError
+          ? error.message
+          : '입력 정보를 임시 저장하지 못했습니다.',
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -175,7 +222,7 @@ export function CashFlowPage({
           isSaving
             ? '저장 중...'
             : analysisId
-              ? '서버에 안전하게 저장됩니다'
+              ? undefined
               : '입력 화면 미리보기'
         }
       />
@@ -302,6 +349,19 @@ export function CashFlowPage({
                       {saveError}
                     </p>
                   ) : null}
+                  {saveMessage ? (
+                    <p className="form-navigation__success" role="status">
+                      {saveMessage}
+                    </p>
+                  ) : null}
+                  <button
+                    className="button button--secondary"
+                    disabled={isSaving}
+                    onClick={saveDraft}
+                    type="button"
+                  >
+                    임시 저장
+                  </button>
                   <button
                     className="button button--primary"
                     disabled={isSaving}

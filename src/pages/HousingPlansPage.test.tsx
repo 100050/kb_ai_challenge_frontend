@@ -29,6 +29,9 @@ describe('HousingPlansPage', () => {
       screen.getByRole('progressbar', { name: '입력 진행률 100%' }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText('매물 이름')).toBeInTheDocument();
+    expect(screen.getByLabelText('시')).toBeInTheDocument();
+    expect(screen.getByLabelText('구')).toBeInTheDocument();
+    expect(screen.getByLabelText('동')).toBeInTheDocument();
     expect(screen.getByLabelText('보증금 대출 예정액')).toBeInTheDocument();
     expect(screen.getByLabelText('중개보수')).toBeInTheDocument();
     expect(screen.queryByLabelText('법정동 코드')).not.toBeInTheDocument();
@@ -114,10 +117,57 @@ describe('HousingPlansPage', () => {
     );
 
     expect(await screen.findByLabelText('매물 이름')).toHaveValue('역삼 원룸');
-    expect(screen.getByLabelText('주소')).toHaveValue(
-      '서울특별시 강남구 역삼동',
-    );
+    expect(screen.getByLabelText('시')).toHaveValue('서울특별시');
+    expect(screen.getByLabelText('구')).toHaveValue('강남구');
+    expect(screen.getByLabelText('동')).toHaveValue('역삼동');
     expect(screen.getByLabelText('보증금')).toHaveValue('1000');
     expect(screen.getByLabelText('월세')).toHaveValue('70');
+  });
+
+  it('저장된 매물이 없으면 서버에 첫 매물 초안을 만들고 입력 폼을 표시한다', async () => {
+    server.use(
+      http.get(`${apiBaseUrl}/analyses/${analysisId}/housing-plans`, () =>
+        HttpResponse.json({ housing_plans: [] }),
+      ),
+      http.post(
+        `${apiBaseUrl}/analyses/${analysisId}/housing-plans`,
+        () =>
+          HttpResponse.json(
+            {
+              analysis_id: analysisId,
+              property_id: propertyId,
+              name: null,
+              address: null,
+              property_type: null,
+              legal_dong_code: null,
+              exclusive_area_m2: null,
+              housing_type: null,
+              deposit: null,
+              monthly_rent: null,
+              maintenance_fee: null,
+              utilities: null,
+              transportation_cost: null,
+              loan_plan: null,
+              additional_costs: null,
+              is_complete: false,
+              created_at: '2026-07-23T03:21:00Z',
+              updated_at: '2026-07-23T03:21:00Z',
+            },
+            { status: 201 },
+          ),
+      ),
+    );
+
+    render(
+      <HousingPlansPage
+        analysisId={analysisId}
+        onExit={() => undefined}
+        onNext={() => undefined}
+        onPrevious={() => undefined}
+      />,
+    );
+
+    expect(await screen.findByLabelText('매물 이름')).toHaveValue('');
+    expect(screen.getByRole('tab', { name: '매물 1' })).toBeInTheDocument();
   });
 });

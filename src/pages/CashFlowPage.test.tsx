@@ -44,6 +44,40 @@ describe('CashFlowPage', () => {
     expect(screen.getByLabelText('기존 대출 월 상환액')).toHaveValue('20');
   });
 
+  it('임시 저장된 필드만 채우고 저장되지 않은 필드는 빈칸으로 둔다', async () => {
+    server.use(
+      http.get(`${apiBaseUrl}/analyses/${analysisId}`, () =>
+        HttpResponse.json({
+          analysis_id: analysisId,
+          status: 'draft',
+          current_step: 'cash_flow',
+          progress: 0,
+          cash_flow: {
+            after_tax_monthly_income: 3_500_000,
+            monthly_living_expenses_excluding_housing_and_transport: null,
+            existing_loan_monthly_payment: null,
+          },
+          financial_goals: null,
+          housing_plans: [],
+          created_at: '2026-07-23T03:00:00Z',
+          updated_at: '2026-07-23T03:20:00Z',
+        }),
+      ),
+    );
+
+    render(
+      <CashFlowPage
+        analysisId={analysisId}
+        onNext={() => undefined}
+        onPrevious={() => undefined}
+      />,
+    );
+
+    expect(await screen.findByLabelText('세후 월 소득')).toHaveValue('350');
+    expect(screen.getByLabelText('월 생활비')).toHaveValue('');
+    expect(screen.getByLabelText('기존 대출 월 상환액')).toHaveValue('');
+  });
+
   it('입력값을 원 단위로 변환해 서버에 저장하고 다음 단계로 이동한다', async () => {
     const user = userEvent.setup();
     const onNext = vi.fn();
@@ -131,5 +165,58 @@ describe('CashFlowPage', () => {
     await user.click(screen.getByRole('button', { name: '저장하고 다음' }));
 
     expect(screen.getAllByText('금액을 입력해 주세요.')).toHaveLength(3);
+  });
+
+  it('작성한 필드만 서버에 임시 저장하고 화면에 머문다', async () => {
+    const user = userEvent.setup();
+    const onNext = vi.fn();
+    let requestBody: unknown;
+
+    server.use(
+      http.get(`${apiBaseUrl}/analyses/${analysisId}`, () =>
+        HttpResponse.json({
+          analysis_id: analysisId,
+          status: 'draft',
+          current_step: 'cash_flow',
+          progress: 0,
+          cash_flow: null,
+          financial_goals: null,
+          housing_plans: [],
+          created_at: '2026-07-23T03:00:00Z',
+          updated_at: '2026-07-23T03:00:00Z',
+        }),
+      ),
+      http.patch(
+        `${apiBaseUrl}/analyses/${analysisId}/cash-flow`,
+        async ({ request }) => {
+          requestBody = await request.json();
+          return HttpResponse.json({
+            analysis_id: analysisId,
+            cash_flow: requestBody,
+            current_step: 'financial_goals',
+            progress: 33,
+          });
+        },
+      ),
+    );
+
+    render(
+      <CashFlowPage
+        analysisId={analysisId}
+        onNext={onNext}
+        onPrevious={() => undefined}
+      />,
+    );
+
+    await user.type(await screen.findByLabelText('세후 월 소득'), '350');
+    await user.click(screen.getByRole('button', { name: '임시 저장' }));
+
+    expect(
+      await screen.findByText('지금까지 입력한 내용을 저장했습니다.'),
+    ).toBeInTheDocument();
+    expect(requestBody).toEqual({
+      after_tax_monthly_income: 3_500_000,
+    });
+    expect(onNext).not.toHaveBeenCalled();
   });
 });

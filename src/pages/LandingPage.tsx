@@ -7,7 +7,9 @@ import {
 } from '../components/ui/Icons';
 
 interface LandingPageProps {
-  onStart: () => void;
+  isStarting?: boolean;
+  startError?: string;
+  onStart: () => void | Promise<void>;
 }
 
 const steps = [
@@ -31,10 +33,14 @@ const steps = [
   },
 ];
 
-export function LandingPage({ onStart }: LandingPageProps) {
+export function LandingPage({
+  isStarting = false,
+  onStart,
+  startError,
+}: LandingPageProps) {
   return (
     <div className="landing-page">
-      <AppHeader onStart={onStart} />
+      <AppHeader isStarting={isStarting} onStart={onStart} />
       <main>
         <section className="hero">
           <div className="hero__content">
@@ -55,12 +61,18 @@ export function LandingPage({ onStart }: LandingPageProps) {
             </p>
             <button
               className="button button--primary hero__button"
+              disabled={isStarting}
               onClick={onStart}
               type="button"
             >
-              무료로 분석 시작하기
+              {isStarting ? '분석을 준비하는 중...' : '무료로 분석 시작하기'}
               <ArrowRightIcon />
             </button>
+            {startError ? (
+              <p className="hero__error" role="alert">
+                {startError}
+              </p>
+            ) : null}
             <p className="hero__meta">약 5분 소요 · 회원가입 없이 체험</p>
           </div>
 

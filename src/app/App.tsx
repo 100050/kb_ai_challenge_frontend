@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react';
 
+import { ApiError } from '../api/httpClient';
+import { createAnalysis } from '../features/analysis/api/analysisApi';
+import {
+  getStoredAnalysisId,
+  storeAnalysisId,
+} from '../features/analysis/model/analysisStorage';
 import { LandingPage } from '../pages/LandingPage';
 import { CashFlowPage } from '../pages/CashFlowPage';
 import { FinancialGoalsPage } from '../pages/FinancialGoalsPage';
@@ -8,6 +14,8 @@ import { ResultsPage } from '../pages/ResultsPage';
 
 export function App() {
   const [pathname, setPathname] = useState(window.location.pathname);
+  const [isStarting, setIsStarting] = useState(false);
+  const [startError, setStartError] = useState('');
 
   useEffect(() => {
     const handleNavigation = () => setPathname(window.location.pathname);
@@ -126,9 +134,40 @@ export function App() {
     );
   }
 
-  const handleStart = () => {
-    navigate('/cash-flow');
+  const handleStart = async () => {
+    setIsStarting(true);
+    setStartError('');
+
+    try {
+      const storedAnalysisId = getStoredAnalysisId();
+      if (storedAnalysisId) {
+        navigate(
+          `/analyses/${encodeURIComponent(storedAnalysisId)}/cash-flow`,
+        );
+        return;
+      }
+
+      const analysis = await createAnalysis();
+      storeAnalysisId(analysis.analysis_id);
+      navigate(
+        `/analyses/${encodeURIComponent(analysis.analysis_id)}/cash-flow`,
+      );
+    } catch (error) {
+      setStartError(
+        error instanceof ApiError
+          ? error.message
+          : '분석을 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      );
+    } finally {
+      setIsStarting(false);
+    }
   };
 
-  return <LandingPage onStart={handleStart} />;
+  return (
+    <LandingPage
+      isStarting={isStarting}
+      onStart={handleStart}
+      startError={startError}
+    />
+  );
 }

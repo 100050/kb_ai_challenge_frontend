@@ -1,15 +1,15 @@
 export interface CashFlow {
-  after_tax_monthly_income: number;
-  monthly_living_expenses_excluding_housing_and_transport: number;
-  existing_loan_monthly_payment: number;
+  after_tax_monthly_income: number | null;
+  monthly_living_expenses_excluding_housing_and_transport: number | null;
+  existing_loan_monthly_payment: number | null;
 }
 
 export interface FinancialGoals {
-  target_monthly_savings: number;
-  monthly_safety_margin: number;
-  available_cash: number;
-  minimum_emergency_fund: number;
-  recoverable_existing_rental_deposit: number;
+  target_monthly_savings: number | null;
+  monthly_safety_margin: number | null;
+  available_cash: number | null;
+  minimum_emergency_fund: number | null;
+  recoverable_existing_rental_deposit: number | null;
 }
 
 export interface Analysis {
@@ -26,6 +26,14 @@ export interface Analysis {
   housing_plans: unknown[];
   created_at: string;
   updated_at: string;
+}
+
+export interface AnalysisCreateResponse {
+  analysis_id: string;
+  status: 'draft';
+  current_step: 'cash_flow';
+  progress: number;
+  created_at: string;
 }
 
 export interface CashFlowUpdateResponse {
@@ -146,4 +154,10 @@ export interface AnalysisResult {
   analysis_id: string;
   candidates: AnalysisCandidateResult[];
   generated_at: string;
+}
+
+export interface EvaluationResponse {
+  evaluation_id: string;
+  status: 'queued' | 'processing' | 'completed' | 'failed';
+  progress: number;
 }

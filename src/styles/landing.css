@@ -96,6 +96,12 @@
   font-size: 13px;
 }
 
+.hero__error {
+  margin: 10px 0 0;
+  color: var(--color-danger);
+  font-size: 13px;
+}
+
 .result-preview {
   position: relative;
   padding: 32px;
