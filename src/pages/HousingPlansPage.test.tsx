@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { server } from '../test/server';
 import { HousingPlansPage } from './HousingPlansPage';
@@ -29,6 +29,8 @@ describe('HousingPlansPage', () => {
       screen.getByRole('progressbar', { name: '입력 진행률 100%' }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText('매물 이름')).toBeInTheDocument();
+    expect(screen.getByLabelText('매물 메모 (선택)')).toBeInTheDocument();
+    expect(screen.getByText('0 / 2,000자')).toBeInTheDocument();
     expect(screen.getByLabelText('시/도')).toBeInTheDocument();
     expect(screen.getByLabelText('시/군/구')).toBeInTheDocument();
     expect(screen.getByLabelText('읍/면/동')).toBeInTheDocument();
@@ -107,6 +109,37 @@ describe('HousingPlansPage', () => {
   });
 
   it('분석 ID가 있으면 서버에서 매물 목록과 상세정보를 불러온다', async () => {
+    const user = userEvent.setup();
+    const onNext = vi.fn();
+    let requestBody: Record<string, unknown> | undefined;
+    const savedPlan = {
+      analysis_id: analysisId,
+      property_id: propertyId,
+      name: '역삼 원룸',
+      memo: '역세권, 엘리베이터 있음',
+      address: '서울특별시 강남구 역삼동',
+      property_type: 'officetel',
+      legal_dong_code: null,
+      exclusive_area_m2: 20,
+      housing_type: 'monthly_rent',
+      deposit: 10_000_000,
+      monthly_rent: 700_000,
+      maintenance_fee: 100_000,
+      utilities: 50_000,
+      transportation_cost: 80_000,
+      loan_plan: {
+        deposit_loan_amount: 0,
+        annual_interest_rate: 0,
+      },
+      additional_costs: {
+        brokerage_fee: 300_000,
+        moving_cost: 1_000_000,
+        other_move_in_cost: 300_000,
+      },
+      is_complete: true,
+      created_at: '2026-07-23T03:21:00Z',
+      updated_at: '2026-07-23T03:25:00Z',
+    };
     server.use(
       http.get(`${apiBaseUrl}/analyses/${analysisId}/housing-plans`, () =>
         HttpResponse.json({
@@ -123,34 +156,17 @@ describe('HousingPlansPage', () => {
       ),
       http.get(
         `${apiBaseUrl}/analyses/${analysisId}/housing-plans/${propertyId}`,
-        () =>
-          HttpResponse.json({
-            analysis_id: analysisId,
-            property_id: propertyId,
-            name: '역삼 원룸',
-            address: '서울특별시 강남구 역삼동',
-            property_type: 'officetel',
-            legal_dong_code: '1168010100',
-            exclusive_area_m2: 20,
-            housing_type: 'monthly_rent',
-            deposit: 10_000_000,
-            monthly_rent: 700_000,
-            maintenance_fee: 100_000,
-            utilities: 50_000,
-            transportation_cost: 80_000,
-            loan_plan: {
-              deposit_loan_amount: 0,
-              annual_interest_rate: 0,
-            },
-            additional_costs: {
-              brokerage_fee: 300_000,
-              moving_cost: 1_000_000,
-              other_move_in_cost: 300_000,
-            },
-            is_complete: true,
-            created_at: '2026-07-23T03:21:00Z',
-            updated_at: '2026-07-23T03:25:00Z',
-          }),
+        () => HttpResponse.json(savedPlan),
+      ),
+      http.patch(
+        `${apiBaseUrl}/analyses/${analysisId}/housing-plans/${propertyId}`,
+        async ({ request }) => {
+          requestBody = (await request.json()) as Record<string, unknown>;
+          return HttpResponse.json(savedPlan);
+        },
+      ),
+      http.post(`${apiBaseUrl}/analyses/${analysisId}/evaluation`, () =>
+        HttpResponse.json({ analysis_id: analysisId, status: 'evaluating' }),
       ),
     );
 
@@ -158,17 +174,33 @@ describe('HousingPlansPage', () => {
       <HousingPlansPage
         analysisId={analysisId}
         onExit={() => undefined}
-        onNext={() => undefined}
+        onNext={onNext}
         onPrevious={() => undefined}
       />,
     );
 
     expect(await screen.findByLabelText('매물 이름')).toHaveValue('역삼 원룸');
+    expect(screen.getByLabelText('매물 메모 (선택)')).toHaveValue(
+      '역세권, 엘리베이터 있음',
+    );
     expect(screen.getByLabelText('시/도')).toHaveValue('서울특별시');
     expect(screen.getByLabelText('시/군/구')).toHaveValue('강남구');
     expect(screen.getByLabelText('읍/면/동')).toHaveValue('역삼동');
     expect(screen.getByLabelText('보증금')).toHaveValue('1000');
     expect(screen.getByLabelText('월세')).toHaveValue('70');
+    expect(screen.getByRole('checkbox', { name: '대출 이용' })).not.toBeChecked();
+
+    await user.click(
+      screen.getByRole('button', { name: /저장하고 분석 준비/ }),
+    );
+    await waitFor(() => {
+      expect(requestBody?.loan_plan).toEqual({
+        deposit_loan_amount: 0,
+        annual_interest_rate: 0,
+      });
+      expect(requestBody?.memo).toBe('역세권, 엘리베이터 있음');
+    });
+    expect(onNext).toHaveBeenCalledOnce();
   });
 
   it('저장된 매물이 없으면 서버에 첫 매물 초안을 만들고 입력 폼을 표시한다', async () => {

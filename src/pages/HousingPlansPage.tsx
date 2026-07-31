@@ -28,6 +28,7 @@ interface HousingPlansPageProps {
 interface HousingFormValues {
   propertyId: string;
   name: string;
+  memo: string;
   city: string;
   district: string;
   neighborhood: string;
@@ -52,6 +53,7 @@ function createEmptyPlan(index: number): HousingFormValues {
   return {
     propertyId: `local-${Date.now()}-${index}`,
     name: '',
+    memo: '',
     city: '',
     district: '',
     neighborhood: '',
@@ -85,6 +87,7 @@ function planToValues(plan: HousingPlan): HousingFormValues {
   return {
     propertyId: plan.property_id,
     name: plan.name ?? '',
+    memo: plan.memo ?? '',
     city,
     district,
     neighborhood,
@@ -102,7 +105,10 @@ function planToValues(plan: HousingPlan): HousingFormValues {
     maintenanceFee: wonToManwon(plan.maintenance_fee),
     utilities: wonToManwon(plan.utilities),
     transportationCost: wonToManwon(plan.transportation_cost),
-    hasDepositLoan: plan.loan_plan !== null,
+    hasDepositLoan:
+      plan.loan_plan !== null &&
+      (plan.loan_plan.deposit_loan_amount > 0 ||
+        plan.loan_plan.annual_interest_rate > 0),
     depositLoanAmount: wonToManwon(plan.loan_plan?.deposit_loan_amount ?? null),
     annualInterestRate:
       plan.loan_plan === null ? '' : String(plan.loan_plan.annual_interest_rate),
@@ -126,6 +132,7 @@ function manwon(value: string) {
 function valuesToRequest(values: HousingFormValues) {
   return {
     name: values.name,
+    memo: values.memo || null,
     address: [values.city, values.district, values.neighborhood].join(' '),
     property_type: values.propertyType || null,
     exclusive_area_m2: optionalNumber(values.exclusiveArea),
@@ -136,12 +143,14 @@ function valuesToRequest(values: HousingFormValues) {
     maintenance_fee: manwon(values.maintenanceFee),
     utilities: manwon(values.utilities),
     transportation_cost: manwon(values.transportationCost),
-    loan_plan: values.hasDepositLoan
-      ? {
-          deposit_loan_amount: manwon(values.depositLoanAmount),
-          annual_interest_rate: Number(values.annualInterestRate || 0),
-        }
-      : null,
+    loan_plan: {
+      deposit_loan_amount: values.hasDepositLoan
+        ? manwon(values.depositLoanAmount)
+        : 0,
+      annual_interest_rate: values.hasDepositLoan
+        ? Number(values.annualInterestRate || 0)
+        : 0,
+    },
     additional_costs: {
       brokerage_fee: manwon(values.brokerageFee),
       moving_cost: manwon(values.movingCost),
@@ -155,6 +164,7 @@ function valuesToPartialRequest(values: HousingFormValues) {
 
   return {
     ...(values.name ? { name: request.name } : {}),
+    memo: request.memo,
     ...(values.city && values.district && values.neighborhood
       ? { address: request.address }
       : {}),
@@ -534,6 +544,23 @@ export function HousingPlansPage({
                           placeholder="예: 역삼 원룸"
                           value={activePlan.name}
                         />
+                        <div className="form-field housing-memo-field">
+                          <label htmlFor="property-memo">매물 메모 (선택)</label>
+                          <textarea
+                            className="text-input housing-memo-input"
+                            id="property-memo"
+                            maxLength={2000}
+                            onChange={(event) =>
+                              updateActive('memo', event.target.value)
+                            }
+                            placeholder="예: 역세권, 엘리베이터 있음, 채광 좋음"
+                            rows={4}
+                            value={activePlan.memo}
+                          />
+                          <span className="housing-memo-count">
+                            {activePlan.memo.length.toLocaleString('ko-KR')} / 2,000자
+                          </span>
+                        </div>
                         <TextField
                           id="property-city"
                           label="시/도"

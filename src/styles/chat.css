@@ -31,9 +31,10 @@
   text-decoration: none;
 }
 
-.chat-header svg {
-  width: 28px;
-  color: var(--color-brand-primary);
+.chat-header img {
+  width: auto;
+  height: 46px;
+  object-fit: contain;
 }
 
 .chat-header button,

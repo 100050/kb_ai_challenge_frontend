@@ -22,14 +22,12 @@
 .app-header__brand {
   display: inline-flex;
   align-items: center;
-  gap: 14px;
-  font-size: 22px;
-  font-weight: 700;
 }
 
 .app-header__logo {
-  width: 36px;
-  height: 36px;
+  width: auto;
+  height: 58px;
+  object-fit: contain;
 }
 
 .app-header__nav {
@@ -179,9 +177,20 @@
 .preview-card strong {
   display: block;
   margin: 13px 0 6px;
-  color: var(--color-success);
-  font-size: clamp(20px, 1.9vw, 28px);
+  font-size: clamp(18px, 1.55vw, 24px);
   letter-spacing: -0.04em;
+}
+
+.preview-card strong.preview-card__value--danger {
+  color: var(--color-danger);
+}
+
+.preview-card strong.preview-card__value--success {
+  color: var(--color-success);
+}
+
+.preview-card strong.preview-card__value--warning {
+  color: var(--color-warning);
 }
 
 .preview-card span {
@@ -206,6 +215,17 @@
   font-size: 28px;
   font-weight: 800;
   line-height: 0.9;
+}
+
+.result-preview__note strong {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--color-neutral-800);
+  font-size: 14px;
+}
+
+.result-preview__note p {
+  margin: 0;
 }
 
 .service-flow {
@@ -343,13 +363,12 @@
   }
 
   .app-header__brand {
-    gap: 9px;
-    font-size: 17px;
+    display: inline-flex;
   }
 
   .app-header__logo {
-    width: 30px;
-    height: 30px;
+    width: auto;
+    height: 49px;
   }
 
   .app-header__nav > a {

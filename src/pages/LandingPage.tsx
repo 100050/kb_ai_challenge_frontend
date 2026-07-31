@@ -51,9 +51,9 @@ export function LandingPage({
             <h1>
               청년의 집 선택,
               <br />
-              월세뿐 아니라
+              월주거비뿐 아니라
               <br />
-              내 재무상태까지 함께 비교하세요.
+              내 재무상태까지 함께 비교
             </h1>
             <p className="hero__description">
               직접 찾은 후보 매물을 입력하면 초기자금, 입주 후 현금흐름과
@@ -79,32 +79,40 @@ export function LandingPage({
             <div className="result-preview__header">
               <div>
                 <p className="result-preview__label">분석 결과 미리보기</p>
-                <h2>매물 2 재무 분석</h2>
+                <h2>매물 2 분석 요약</h2>
               </div>
-              <span className="status-pill status-pill--success">모두 충족</span>
+              <span className="status-pill status-pill--success">분석 완료</span>
             </div>
 
             <div className="preview-cards">
               <article className="preview-card">
-                <p>초기자금 및 유동성</p>
-                <strong>3,700만 원</strong>
-                <span>입주 후 유동자산</span>
+                <p>가격 적정성</p>
+                <strong className="preview-card__value--danger">
+                  +10.8%
+                </strong>
+                <span>유사 거래 대비</span>
               </article>
               <article className="preview-card">
                 <p>월 현금흐름</p>
-                <strong>+33만 원</strong>
+                <strong className="preview-card__value--success">+12만 원</strong>
                 <span>실제 월 잔여금</span>
               </article>
               <article className="preview-card">
                 <p>1년 재무목표</p>
-                <strong>112%</strong>
+                <strong className="preview-card__value--warning">88%</strong>
                 <span>목표 달성률</span>
               </article>
             </div>
 
             <div className="result-preview__note">
-              <span aria-hidden="true">“</span>
-              초기자금과 월 현금흐름, 1년 재무목표를 매물별로 확인하세요.
+              <span aria-hidden="true">✦</span>
+              <div>
+                <strong>AI 해설</strong>
+                <p>
+                  매물 2는 주변 유사 거래보다 가격 부담이 높고 월 지출
+                  후 약 12만 원의 자금 여유가 남습니다.
+                </p>
+              </div>
             </div>
           </div>
         </section>

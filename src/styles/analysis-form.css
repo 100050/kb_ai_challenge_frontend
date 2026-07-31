@@ -19,14 +19,12 @@
 .analysis-header__brand {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  font-size: 20px;
-  font-weight: 700;
 }
 
-.analysis-header__brand svg {
-  width: 32px;
-  height: 32px;
+.analysis-header__brand img {
+  width: auto;
+  height: 52px;
+  object-fit: contain;
 }
 
 .analysis-header__actions {
@@ -394,6 +392,25 @@
   box-shadow: 0 0 0 3px rgb(253 199 15 / 16%);
 }
 
+.housing-memo-field {
+  grid-column: 1 / -1;
+  max-width: none;
+}
+
+.housing-memo-input {
+  display: block;
+  min-height: 104px;
+  resize: vertical;
+}
+
+.housing-memo-count {
+  display: block;
+  margin-top: 6px;
+  color: var(--color-neutral-500);
+  font-size: 12px;
+  text-align: right;
+}
+
 .housing-cost-grid {
   margin-top: 24px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -440,6 +457,29 @@
 
 .result-tabs {
   margin-bottom: 20px;
+}
+
+.result-property-memo {
+  margin-bottom: 18px;
+  padding: 18px 20px;
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-medium);
+  background: var(--color-white);
+}
+
+.result-property-memo h2 {
+  margin: 0 0 8px;
+  color: var(--color-neutral-800);
+  font-size: 14px;
+}
+
+.result-property-memo p {
+  margin: 0;
+  color: var(--color-neutral-700);
+  font-size: 14px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .result-overview {
@@ -611,6 +651,10 @@
   font-size: 14px;
   font-weight: 700;
   text-align: right;
+}
+
+.result-metric dd.result-metric__value--negative {
+  color: var(--color-danger);
 }
 
 .result-notes {
@@ -1298,13 +1342,9 @@
     padding: 0 18px;
   }
 
-  .analysis-header__brand {
-    font-size: 16px;
-  }
-
-  .analysis-header__brand svg {
-    width: 28px;
-    height: 28px;
+  .analysis-header__brand img {
+    width: auto;
+    height: 44px;
   }
 
   .analysis-header__actions > span {

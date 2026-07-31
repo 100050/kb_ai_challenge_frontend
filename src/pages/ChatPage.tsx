@@ -10,7 +10,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { ApiError } from '../api/httpClient';
-import { HomeIcon } from '../components/ui/Icons';
+import { BrandLogo } from '../components/ui/BrandLogo';
 import {
   getAnalysisResult,
   getHousingPlan,
@@ -257,8 +257,7 @@ export function ChatPage({
     <div className="chat-page">
       <header className="chat-header">
         <a href="/" aria-label="홈으로 이동">
-          <HomeIcon />
-          <strong>가늠</strong>
+          <BrandLogo />
         </a>
         <div>
           <button onClick={onBack} type="button">← 분석 결과로 돌아가기</button>

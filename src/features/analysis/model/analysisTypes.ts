@@ -67,6 +67,7 @@ export interface HousingPlan {
   analysis_id?: string;
   property_id: string;
   name: string | null;
+  memo: string | null;
   address: string | null;
   property_type: string | null;
   legal_dong_code: string | null;
@@ -87,6 +88,7 @@ export interface HousingPlan {
 export interface HousingPlanSummary {
   property_id: string;
   name: string | null;
+  memo: string | null;
   housing_type: HousingType | null;
   is_complete: boolean;
   updated_at: string;
@@ -118,6 +120,7 @@ export interface PriceComparisonSample {
 export interface AnalysisCandidateResult {
   property_id: string;
   name: string;
+  memo: string | null;
   initial_funds: {
     initial_cash_required: number;
     post_move_liquid_assets: number;

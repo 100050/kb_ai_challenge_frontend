@@ -66,7 +66,7 @@ const monthlyCashFlowStatus: Record<
 const annualGoalStatus: Record<AnnualGoalStatus, StatusPresentation> = {
   below_target: { label: '목표 미달', tone: 'warning' },
   target_met: { label: '목표 달성', tone: 'success' },
-  above_target: { label: '목표 초과', tone: 'success' },
+  above_target: { label: '목표 달성', tone: 'success' },
 };
 
 const previewResult: AnalysisResult = {
@@ -75,6 +75,7 @@ const previewResult: AnalysisResult = {
     {
       property_id: 'preview-property-1',
       name: '매물 1',
+      memo: '역세권, 엘리베이터 있음',
       initial_funds: {
         initial_cash_required: 11_600_000,
         post_move_liquid_assets: 83_400_000,
@@ -112,6 +113,7 @@ const previewResult: AnalysisResult = {
     {
       property_id: 'preview-property-2',
       name: '매물 2',
+      memo: null,
       initial_funds: {
         initial_cash_required: 88_000_000,
         post_move_liquid_assets: 7_000_000,
@@ -149,6 +151,7 @@ const previewResult: AnalysisResult = {
     {
       property_id: 'preview-property-3',
       name: '매물 3',
+      memo: '채광 좋음',
       initial_funds: {
         initial_cash_required: 25_000_000,
         post_move_liquid_assets: 70_000_000,
@@ -219,6 +222,7 @@ const previewHousingPlans: Record<string, HousingPlan> = {
   'preview-property-1': {
     property_id: 'preview-property-1',
     name: '매물 1',
+    memo: '역세권, 엘리베이터 있음',
     address: '서울특별시 강남구 역삼동',
     property_type: 'officetel',
     legal_dong_code: null,
@@ -237,6 +241,7 @@ const previewHousingPlans: Record<string, HousingPlan> = {
   'preview-property-2': {
     property_id: 'preview-property-2',
     name: '매물 2',
+    memo: null,
     address: '서울특별시 관악구 신림동',
     property_type: 'officetel',
     legal_dong_code: null,
@@ -255,6 +260,7 @@ const previewHousingPlans: Record<string, HousingPlan> = {
   'preview-property-3': {
     property_id: 'preview-property-3',
     name: '매물 3',
+    memo: '채광 좋음',
     address: '부산시 동구 수정동',
     property_type: 'multi_family',
     legal_dong_code: null,
@@ -526,15 +532,18 @@ function PriceSampleTable({
 }
 
 interface MetricProps {
+  isNegative?: boolean;
   label: string;
   value: string;
 }
 
-function Metric({ label, value }: MetricProps) {
+function Metric({ isNegative = false, label, value }: MetricProps) {
   return (
     <div className="result-metric">
       <dt>{label}</dt>
-      <dd>{value}</dd>
+      <dd className={isNegative ? 'result-metric__value--negative' : undefined}>
+        {value}
+      </dd>
     </div>
   );
 }
@@ -646,6 +655,20 @@ export function ResultsPage({
     [activeId, result],
   );
 
+  const priceComparisonMode = useMemo(() => {
+    const priceResult = activeCandidate?.price_appropriateness;
+    if (!priceResult || priceResult.status !== 'available') {
+      return null;
+    }
+    if (priceResult.sample_count >= 10) {
+      return 'median';
+    }
+    if (priceResult.sample_count > 0) {
+      return 'individual_samples';
+    }
+    return priceResult.comparison_mode;
+  }, [activeCandidate]);
+
   const retryLoad = () => {
     setIsLoading(true);
     setError('');
@@ -704,6 +727,16 @@ export function ResultsPage({
                 ))}
               </div>
 
+              {activeCandidate.memo ? (
+                <section
+                  aria-labelledby="result-property-memo-title"
+                  className="result-property-memo"
+                >
+                  <h2 id="result-property-memo-title">매물 메모</h2>
+                  <p>{activeCandidate.memo}</p>
+                </section>
+              ) : null}
+
               <section className="result-overview">
                 <div>
                   <span>현재 조건에서 가장 먼저 확인할 항목</span>
@@ -745,12 +778,18 @@ export function ResultsPage({
                     )}
                   />
                   <Metric
+                    isNegative={
+                      activeCandidate.initial_funds.post_move_liquid_assets < 0
+                    }
                     label="입주 후 유동자산"
                     value={formatWon(
                       activeCandidate.initial_funds.post_move_liquid_assets,
                     )}
                   />
                   <Metric
+                    isNegative={
+                      activeCandidate.initial_funds.emergency_fund_gap < 0
+                    }
                     label={
                       activeCandidate.initial_funds.emergency_fund_gap >= 0
                         ? '비상자금 대비 여유액'
@@ -779,12 +818,19 @@ export function ResultsPage({
                     )}
                   />
                   <Metric
+                    isNegative={
+                      activeCandidate.monthly_cash_flow.actual_monthly_balance <
+                      0
+                    }
                     label="실제 월 잔여금"
                     value={formatSignedWon(
                       activeCandidate.monthly_cash_flow.actual_monthly_balance,
                     )}
                   />
                   <Metric
+                    isNegative={
+                      activeCandidate.monthly_cash_flow.monthly_budget_margin < 0
+                    }
                     label="월 예산여유액"
                     value={formatSignedWon(
                       activeCandidate.monthly_cash_flow.monthly_budget_margin,
@@ -806,6 +852,10 @@ export function ResultsPage({
                     )}
                   />
                   <Metric
+                    isNegative={
+                      activeCandidate.annual_goal
+                        .expected_resources_after_one_year < 0
+                    }
                     label="1년 후 예상 재무자원"
                     value={formatWon(
                       activeCandidate.annual_goal
@@ -813,6 +863,9 @@ export function ResultsPage({
                     )}
                   />
                   <Metric
+                    isNegative={
+                      activeCandidate.annual_goal.annual_financial_surplus < 0
+                    }
                     label={
                       activeCandidate.annual_goal.annual_financial_surplus >= 0
                         ? '목표 대비 여유액'
@@ -823,6 +876,10 @@ export function ResultsPage({
                     )}
                   />
                   <Metric
+                    isNegative={
+                      activeCandidate.annual_goal
+                        .annual_goal_achievement_rate < 0
+                    }
                     label="재무목표 달성률"
                     value={`${activeCandidate.annual_goal.annual_goal_achievement_rate.toLocaleString('ko-KR')}%`}
                   />
@@ -852,8 +909,7 @@ export function ResultsPage({
 
                 {activeCandidate.price_appropriateness.status ===
                   'available' &&
-                activeCandidate.price_appropriateness.comparison_mode ===
-                  'median' ? (
+                priceComparisonMode === 'median' ? (
                   <>
                     <PriceComparisonChart
                       candidateCost={
@@ -869,6 +925,10 @@ export function ResultsPage({
                     />
                     <dl className="price-analysis__metrics">
                       <Metric
+                        isNegative={
+                          (activeCandidate.price_appropriateness
+                            .difference_from_median ?? 0) < 0
+                        }
                         label="중앙값 대비 차액"
                         value={formatSignedWon(
                           activeCandidate.price_appropriateness
@@ -876,6 +936,10 @@ export function ResultsPage({
                         )}
                       />
                       <Metric
+                        isNegative={
+                          (activeCandidate.price_appropriateness
+                            .difference_rate_from_median ?? 0) < 0
+                        }
                         label="중앙값 대비 차이율"
                         value={`${(
                           activeCandidate.price_appropriateness
@@ -897,8 +961,7 @@ export function ResultsPage({
                   </>
                 ) : activeCandidate.price_appropriateness.status ===
                     'available' &&
-                  activeCandidate.price_appropriateness.comparison_mode ===
-                    'individual_samples' &&
+                  priceComparisonMode === 'individual_samples' &&
                   housingPlans[activeCandidate.property_id] ? (
                   <PriceSampleTable
                     candidateEquivalentMonthlyCost={

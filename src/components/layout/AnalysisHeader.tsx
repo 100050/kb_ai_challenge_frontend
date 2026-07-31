@@ -1,4 +1,4 @@
-import { HomeIcon } from '../ui/Icons';
+import { BrandLogo } from '../ui/BrandLogo';
 
 interface AnalysisHeaderProps {
   saveStatus?: string;
@@ -12,8 +12,7 @@ export function AnalysisHeader({
   return (
     <header className="analysis-header">
       <a className="analysis-header__brand" href="/" aria-label="홈으로 이동">
-        <HomeIcon />
-        <span>가늠</span>
+        <BrandLogo />
       </a>
       <div className="analysis-header__actions">
         {saveStatus ? <span>{saveStatus}</span> : null}
