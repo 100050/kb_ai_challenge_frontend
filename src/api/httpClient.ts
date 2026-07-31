@@ -1,6 +1,10 @@
 const apiBaseUrl =
   import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
 
+export function buildApiUrl(path: string) {
+  return `${apiBaseUrl}${path}`;
+}
+
 interface ApiErrorBody {
   error?: {
     code?: string;
@@ -27,7 +31,7 @@ export async function requestJson<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
+  const response = await fetch(buildApiUrl(path), {
     ...init,
     headers: {
       Accept: 'application/json',

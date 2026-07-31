@@ -73,7 +73,6 @@ export function LandingPage({
                 {startError}
               </p>
             ) : null}
-            <p className="hero__meta">약 5분 소요 · 회원가입 없이 체험</p>
           </div>
 
           <div className="result-preview" aria-label="분석 결과 미리보기">
@@ -131,6 +130,17 @@ export function LandingPage({
               </li>
             ))}
           </ol>
+          <article className="chat-service-card">
+            <span aria-hidden="true">🤖</span>
+            <div>
+              <p>AI 상담</p>
+              <h3>분석 결과를 챗봇에게 자세히 물어보세요</h3>
+              <p>
+                모든 후보 매물의 초기자금, 월 현금흐름, 재무목표와 가격
+                적정성을 바탕으로 궁금한 점을 이어서 상담할 수 있습니다.
+              </p>
+            </div>
+          </article>
         </section>
       </main>
     </div>

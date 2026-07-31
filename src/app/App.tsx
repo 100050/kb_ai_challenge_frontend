@@ -8,6 +8,7 @@ import {
 } from '../features/analysis/model/analysisStorage';
 import { LandingPage } from '../pages/LandingPage';
 import { CashFlowPage } from '../pages/CashFlowPage';
+import { ChatPage } from '../pages/ChatPage';
 import { FinancialGoalsPage } from '../pages/FinancialGoalsPage';
 import { HousingPlansPage } from '../pages/HousingPlansPage';
 import { ResultsPage } from '../pages/ResultsPage';
@@ -34,6 +35,7 @@ export function App() {
     /^\/analyses\/([^/]+)\/housing-plans$/,
   );
   const resultsMatch = pathname.match(/^\/analyses\/([^/]+)\/results$/);
+  const chatMatch = pathname.match(/^\/analyses\/([^/]+)\/chat$/);
 
   const navigate = (path: string) => {
     window.history.pushState({}, '', path);
@@ -119,8 +121,21 @@ export function App() {
     return (
       <ResultsPage
         analysisId={analysisId}
+        onChat={() => navigate(`/analyses/${analysisId}/chat`)}
         onExit={() => navigate('/')}
         onPrevious={() => navigate(`/analyses/${analysisId}/housing-plans`)}
+      />
+    );
+  }
+
+  if (chatMatch) {
+    const analysisId = decodeURIComponent(chatMatch[1]);
+
+    return (
+      <ChatPage
+        analysisId={analysisId}
+        onBack={() => navigate(`/analyses/${analysisId}/results`)}
+        onRestart={() => navigate(`/analyses/${analysisId}/housing-plans`)}
       />
     );
   }

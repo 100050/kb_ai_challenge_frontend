@@ -52,9 +52,18 @@ describe('ResultsPage', () => {
     const table = screen.getByRole('table', {
       name: '전체 실거래 표본 3개',
     });
-    expect(screen.getByText('부산시 동구 수정동')).toBeInTheDocument();
+    expect(screen.getAllByText('부산시 동구 수정동')).toHaveLength(2);
     expect(within(table).getAllByRole('row')).toHaveLength(5);
     expect(within(table).getByText('내 매물')).toBeInTheDocument();
+    expect(within(table).getByText('매물 3')).toBeInTheDocument();
+    expect(within(table).getByText('수정 아파트 A')).toBeInTheDocument();
+    expect(within(table).getByText('84.5만 원')).toBeInTheDocument();
+    const candidateRow = within(table).getByText('매물 3').closest('tr');
+    expect(candidateRow).not.toBeNull();
+    expect(
+      within(candidateRow!).queryByText('2026-07-02'),
+    ).not.toBeInTheDocument();
+    expect(within(candidateRow!).getByText('—')).toBeInTheDocument();
 
     const depositSort = within(table).getByRole('button', {
       name: /보증금/,
@@ -64,10 +73,16 @@ describe('ResultsPage', () => {
       'aria-sort',
       'ascending',
     );
+    expect(within(table).getAllByRole('row')[1]).toHaveTextContent(
+      '수정 아파트 A',
+    );
     await user.click(depositSort);
     expect(depositSort.closest('th')).toHaveAttribute(
       'aria-sort',
       'descending',
+    );
+    expect(within(table).getAllByRole('row')[1]).toHaveTextContent(
+      '수정 빌라 B',
     );
   });
 
@@ -106,6 +121,7 @@ describe('ResultsPage', () => {
                 difference_from_median: null,
                 difference_rate_from_median: null,
                 price_percentile: null,
+                candidate_equivalent_monthly_cost: null,
                 sample_count: 0,
                 samples: [],
                 reason: '비교 필드가 없습니다.',

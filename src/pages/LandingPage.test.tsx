@@ -16,6 +16,14 @@ describe('LandingPage', () => {
     expect(screen.getByText('1. 소득·생활비')).toBeInTheDocument();
     expect(screen.getByText('2. 자산·재무목표')).toBeInTheDocument();
     expect(screen.getByText('3. 후보 매물·대출·비용')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', {
+        name: '분석 결과를 챗봇에게 자세히 물어보세요',
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('약 5분 소요 · 회원가입 없이 체험'),
+    ).not.toBeInTheDocument();
   });
 
   it('분석 시작 버튼을 누르면 분석 시작을 요청한다', async () => {

@@ -58,7 +58,7 @@ data: {"code":"ANALYSIS_NOT_FOUND"}
 | 월 현금흐름 상태 | `essential_expense_deficit`, `savings_target_shortfall`, `safety_margin_shortfall`, `sufficient` |
 | 1년 재무목표 상태 | `below_target`, `target_met`, `above_target` |
 | 가격 적정성 상태 | `available`, `unavailable` |
-| 챗봇 응답 상태 | `completed`, `approval_required`, `failed` |
+| 챗봇 응답 상태 | `completed`, `failed` |
 
 ### `GET /health`
 
@@ -401,6 +401,12 @@ data: {"code":"ANALYSIS_NOT_FOUND"}
 저장합니다. 외부 API 오류는 재무 계산을 실패시키지 않으며 해당 매물의
 가격 적정성만 `unavailable`로 반환합니다.
 
+가격 적정성 비교 표본은 해당 매물과 같은 주택 유형의 최근 24개월
+전월세 실거래 중 전용면적이 후보 매물의 ±15% 범위인 거래로 구성합니다.
+주소의 첫 지역명이 `부산시`, `세종시`와 같은 광역자치단체 축약형이면
+법정동 조회 전에 `부산광역시`, `세종특별자치시` 등의 공식 명칭으로
+자동 변환합니다.
+
 `202 Accepted`
 
 ```json
@@ -477,6 +483,7 @@ data: {"status":"completed","stage":"financial_management","progress":100}
         "difference_from_median": 40000,
         "difference_rate_from_median": 4.55,
         "price_percentile": 72.2,
+        "candidate_equivalent_monthly_cost": null,
         "samples": [],
         "reason": null
       },
@@ -508,7 +515,9 @@ data: {"status":"completed","stage":"financial_management","progress":100}
   `samples`는 빈 배열입니다.
 - 표본이 1~9개이면 `comparison_mode`는 `individual_samples`입니다.
   표본 수가 적어 중앙값 비교 지표는 모두 `null`이며 `samples`에 모든
-  비교 표본을 제공합니다.
+  비교 표본의 매물명, 주소, 계약 정보와 환산 월 임대비용을 제공합니다.
+  `candidate_equivalent_monthly_cost`에는 사용자 후보 매물의 환산 월
+  임대비용을 제공합니다.
 
 표본이 10개 미만인 경우:
 
@@ -521,8 +530,11 @@ data: {"status":"completed","stage":"financial_management","progress":100}
   "difference_from_median": null,
   "difference_rate_from_median": null,
   "price_percentile": null,
+  "candidate_equivalent_monthly_cost": 900000,
   "samples": [
     {
+      "name": "비교 아파트 A",
+      "address": "서울특별시 강남구 역삼동 123-4",
       "deposit": 10000000,
       "monthly_rent": 700000,
       "exclusive_area_m2": 58.0,
@@ -530,6 +542,8 @@ data: {"status":"completed","stage":"financial_management","progress":100}
       "equivalent_monthly_cost": 741667
     },
     {
+      "name": "비교 아파트 B",
+      "address": "서울특별시 강남구 도곡동 55",
       "deposit": 20000000,
       "monthly_rent": 800000,
       "exclusive_area_m2": 62.0,
@@ -543,7 +557,9 @@ data: {"status":"completed","stage":"financial_management","progress":100}
 
 `equivalent_monthly_cost`는 각 표본의
 `월세 + 보증금 × 연 전월세전환율 ÷ 100 ÷ 12`를 원 단위로 반올림한
-금액입니다.
+금액입니다. `candidate_equivalent_monthly_cost`도 같은 전월세전환율과
+공식으로 계산합니다. 공공데이터에 건물·단지명이 없는 주택 유형은
+표본의 `name`이 `null`일 수 있습니다.
 
 필요한 비교 필드가 없거나 외부 데이터를 구하지 못하면
 `price_appropriateness.status`는 `unavailable`이고 `reason`에 원인이
@@ -577,7 +593,7 @@ event: message_delta
 data: {"content":"저장된 재무 분석 결과를 설명합니다."}
 
 event: message_end
-data: {"turn_id":"...","role":"assistant","content":"...","status":"completed","pending_approvals":[],"created_at":"2026-07-27T03:40:00Z"}
+data: {"turn_id":"...","role":"assistant","content":"...","status":"completed","created_at":"2026-07-27T03:40:00Z"}
 ```
 
 Pydantic AI의 전체 메시지 이력은 PostgreSQL에 저장됩니다. 사용자가
@@ -585,57 +601,10 @@ Pydantic AI의 전체 메시지 이력은 PostgreSQL에 저장됩니다. 사용�
 계속합니다.
 
 사용자가 소득·생활비, 자산·재무목표 또는 매물별 입력 변경을 요청하면
-에이전트는 수정 Tool을 제안합니다. 수정 Tool은 바로 실행되지 않고 다음
-`approval_required` 이벤트를 반환합니다.
-
-```text
-event: approval_required
-data: {"turn_id":"4d694b39-e6e3-4ce2-a893-d54319a62c6f","role":"assistant","content":null,"status":"approval_required","pending_approvals":[{"tool_call_id":"update-income","tool_name":"update_cash_flow","arguments":{"after_tax_monthly_income":4000000}}],"created_at":"2026-07-27T03:40:00Z"}
-
-event: message_end
-data: {"turn_id":"4d694b39-e6e3-4ce2-a893-d54319a62c6f","role":"assistant","content":null,"status":"approval_required","pending_approvals":[{"tool_call_id":"update-income","tool_name":"update_cash_flow","arguments":{"after_tax_monthly_income":4000000}}],"created_at":"2026-07-27T03:40:00Z"}
-```
-
-프론트엔드는 `approval_required` 이벤트에서 변경 전 확인 UI를 표시하고
-뒤이어 오는 `message_end` 이벤트에서 현재 SSE 연결을 종료 처리합니다.
-
-### `POST /analyses/{analysis_id}/chat/approvals`
-
-요청:
-
-```json
-{
-  "turn_id": "4d694b39-e6e3-4ce2-a893-d54319a62c6f",
-  "tool_call_id": "update-income",
-  "approved": true
-}
-```
-
-승인된 경우 기존 단계별 PATCH와 동일한 서비스 및 검증을 사용하여
-입력된 필드만 수정합니다. 입력 변경으로 기존 평가 결과는 삭제되며
-새 결과를 보려면 평가 API를 다시 실행해야 합니다. 거절하면 입력은
-변경되지 않고 대화를 계속합니다.
-
-`200 OK`:
-
-```json
-{
-  "turn_id": "4d694b39-e6e3-4ce2-a893-d54319a62c6f",
-  "role": "assistant",
-  "content": "월 소득을 400만 원으로 변경했습니다.",
-  "status": "completed",
-  "pending_approvals": [],
-  "created_at": "2026-07-27T03:40:00Z"
-}
-```
-
-한 응답에 처리되지 않은 다른 Tool 호출이 남아 있으면 `status`가 다시
-`approval_required`이고 `pending_approvals`에 다음 승인 대상이
-포함될 수 있습니다.
-
-- 분석을 찾을 수 없으면 `404 ANALYSIS_NOT_FOUND`
-- 해당 대화에서 처리할 승인 요청을 찾을 수 없으면
-  `404 PENDING_APPROVAL_NOT_FOUND`
+에이전트가 기존 단계별 PATCH와 동일한 서비스 및 검증을 사용하는 수정
+Tool을 즉시 실행합니다. 별도의 사용자 승인 요청이나 승인 API는 없습니다.
+입력 변경으로 기존 평가 결과는 삭제되며 새 결과를 보려면 평가 API를
+다시 실행해야 합니다.
 
 ### `GET /analyses/{analysis_id}/chat/messages`
 

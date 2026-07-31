@@ -20,6 +20,7 @@ import type {
 
 interface ResultsPageProps {
   analysisId?: string;
+  onChat?: () => void;
   onExit: () => void;
   onPrevious: () => void;
 }
@@ -101,6 +102,7 @@ const previewResult: AnalysisResult = {
         difference_from_median: 50_000,
         difference_rate_from_median: 5.68,
         price_percentile: 72.2,
+        candidate_equivalent_monthly_cost: null,
         samples: [],
         reason: null,
       },
@@ -137,6 +139,7 @@ const previewResult: AnalysisResult = {
         difference_from_median: null,
         difference_rate_from_median: null,
         price_percentile: null,
+        candidate_equivalent_monthly_cost: null,
         samples: [],
         reason: '가격 비교에 필요한 매물 정보가 부족합니다.',
       },
@@ -173,8 +176,11 @@ const previewResult: AnalysisResult = {
         difference_from_median: null,
         difference_rate_from_median: null,
         price_percentile: null,
+        candidate_equivalent_monthly_cost: 845_000,
         samples: [
           {
+            name: '수정 아파트 A',
+            address: '부산시 동구 수정동 101-2',
             deposit: 10_000_000,
             monthly_rent: 700_000,
             exclusive_area_m2: 58,
@@ -182,6 +188,8 @@ const previewResult: AnalysisResult = {
             equivalent_monthly_cost: 741_667,
           },
           {
+            name: '수정 빌라 B',
+            address: '부산시 동구 수정동 220-4',
             deposit: 20_000_000,
             monthly_rent: 800_000,
             exclusive_area_m2: 62,
@@ -189,6 +197,8 @@ const previewResult: AnalysisResult = {
             equivalent_monthly_cost: 883_333,
           },
           {
+            name: null,
+            address: '부산시 동구 좌천동 88-1',
             deposit: 15_000_000,
             monthly_rent: 750_000,
             exclusive_area_m2: 60,
@@ -340,11 +350,17 @@ function PriceComparisonChart({
 
 type SampleSortKey = keyof PriceComparisonSample;
 type SortDirection = 'ascending' | 'descending';
+type ComparisonRow = PriceComparisonSample & {
+  id: string;
+  isCandidate: boolean;
+};
 
 const sampleColumns: {
   key: SampleSortKey;
   label: string;
 }[] = [
+  { key: 'name', label: '매물 이름' },
+  { key: 'address', label: '주소' },
   { key: 'deposit', label: '보증금' },
   { key: 'monthly_rent', label: '월세' },
   { key: 'exclusive_area_m2', label: '전용면적' },
@@ -353,21 +369,57 @@ const sampleColumns: {
 ];
 
 interface PriceSampleTableProps {
+  candidateEquivalentMonthlyCost: number | null;
   property: HousingPlan;
   samples: PriceComparisonSample[];
 }
 
-function PriceSampleTable({ property, samples }: PriceSampleTableProps) {
+function PriceSampleTable({
+  candidateEquivalentMonthlyCost,
+  property,
+  samples,
+}: PriceSampleTableProps) {
   const [sortKey, setSortKey] =
     useState<SampleSortKey>('equivalent_monthly_cost');
   const [direction, setDirection] = useState<SortDirection>('ascending');
 
-  const sortedSamples = useMemo(() => {
+  const sortedRows = useMemo(() => {
     const multiplier = direction === 'ascending' ? 1 : -1;
+    const latestContractDate = samples.reduce(
+      (latest, sample) =>
+        sample.contract_date > latest ? sample.contract_date : latest,
+      '',
+    );
+    const rows: ComparisonRow[] = [
+      ...samples.map((sample, index) => ({
+        ...sample,
+        id: `sample-${index}-${sample.contract_date}-${sample.deposit}`,
+        isCandidate: false,
+      })),
+      {
+        id: `candidate-${property.property_id}`,
+        isCandidate: true,
+        name: property.name,
+        address: property.address,
+        deposit: property.deposit ?? 0,
+        monthly_rent: property.monthly_rent ?? 0,
+        exclusive_area_m2: property.exclusive_area_m2 ?? 0,
+        contract_date: latestContractDate,
+        equivalent_monthly_cost:
+          candidateEquivalentMonthlyCost ?? 0,
+      },
+    ];
 
-    return [...samples].sort((left, right) => {
+    return rows.sort((left, right) => {
       const leftValue = left[sortKey];
       const rightValue = right[sortKey];
+
+      if (leftValue === null) {
+        return rightValue === null ? 0 : 1;
+      }
+      if (rightValue === null) {
+        return -1;
+      }
 
       if (typeof leftValue === 'string' && typeof rightValue === 'string') {
         return leftValue.localeCompare(rightValue) * multiplier;
@@ -375,7 +427,13 @@ function PriceSampleTable({ property, samples }: PriceSampleTableProps) {
 
       return (Number(leftValue) - Number(rightValue)) * multiplier;
     });
-  }, [direction, samples, sortKey]);
+  }, [
+    candidateEquivalentMonthlyCost,
+    direction,
+    property,
+    samples,
+    sortKey,
+  ]);
 
   const changeSort = (key: SampleSortKey) => {
     if (key === sortKey) {
@@ -423,26 +481,42 @@ function PriceSampleTable({ property, samples }: PriceSampleTableProps) {
           </tr>
         </thead>
         <tbody>
-          <tr className="sample-table__my-property">
-            <td>{formatWon(property.deposit ?? 0)}</td>
-            <td>{formatWon(property.monthly_rent ?? 0)}</td>
-            <td>
-              {property.exclusive_area_m2 === null
-                ? '—'
-                : `${property.exclusive_area_m2.toLocaleString('ko-KR')}㎡`}
-            </td>
-            <td>내 매물</td>
-            <td>—</td>
-          </tr>
-          {sortedSamples.map((sample) => (
+          {sortedRows.map((sample) => (
             <tr
-              key={`${sample.contract_date}-${sample.deposit}-${sample.monthly_rent}`}
+              className={
+                sample.isCandidate
+                  ? 'sample-table__my-property'
+                  : undefined
+              }
+              key={sample.id}
             >
+              <td>
+                {sample.name ??
+                  (sample.isCandidate
+                    ? '이름 없는 매물'
+                    : '이름 정보 없음')}
+                {sample.isCandidate ? <small>내 매물</small> : null}
+              </td>
+              <td>
+                {sample.address ??
+                  (sample.isCandidate ? '주소 미입력' : '주소 정보 없음')}
+              </td>
               <td>{formatWon(sample.deposit)}</td>
               <td>{formatWon(sample.monthly_rent)}</td>
-              <td>{sample.exclusive_area_m2.toLocaleString('ko-KR')}㎡</td>
-              <td>{sample.contract_date}</td>
-              <td>{formatWon(sample.equivalent_monthly_cost)}</td>
+              <td>
+                {sample.isCandidate && property.exclusive_area_m2 === null
+                  ? '—'
+                  : `${sample.exclusive_area_m2.toLocaleString('ko-KR')}㎡`}
+              </td>
+              <td>
+                {sample.isCandidate ? '—' : sample.contract_date || '—'}
+              </td>
+              <td>
+                {sample.isCandidate &&
+                candidateEquivalentMonthlyCost === null
+                  ? '—'
+                  : formatWon(sample.equivalent_monthly_cost)}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -496,6 +570,7 @@ function ResultCard({
 
 export function ResultsPage({
   analysisId,
+  onChat,
   onExit,
   onPrevious,
 }: ResultsPageProps) {
@@ -826,6 +901,10 @@ export function ResultsPage({
                     'individual_samples' &&
                   housingPlans[activeCandidate.property_id] ? (
                   <PriceSampleTable
+                    candidateEquivalentMonthlyCost={
+                      activeCandidate.price_appropriateness
+                        .candidate_equivalent_monthly_cost
+                    }
                     property={housingPlans[activeCandidate.property_id]}
                     samples={activeCandidate.price_appropriateness.samples}
                   />
@@ -868,6 +947,15 @@ export function ResultsPage({
             >
               입력 수정
             </button>
+            {onChat ? (
+              <button
+                className="button button--primary"
+                onClick={onChat}
+                type="button"
+              >
+                AI에게 물어보기
+              </button>
+            ) : null}
           </footer>
         </main>
       </div>

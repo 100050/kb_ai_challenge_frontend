@@ -90,12 +90,6 @@
   line-height: 1.75;
 }
 
-.hero__meta {
-  margin: 13px 0 0;
-  color: var(--color-neutral-500);
-  font-size: 13px;
-}
-
 .hero__error {
   margin: 10px 0 0;
   color: var(--color-danger);
@@ -285,6 +279,46 @@
   color: var(--color-neutral-700);
   font-size: 13px;
   line-height: 1.55;
+}
+
+.chat-service-card {
+  display: flex;
+  gap: 22px;
+  align-items: center;
+  margin-top: 24px;
+  padding: 28px 32px;
+  border: 1px solid var(--color-brand-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-brand-pale);
+}
+
+.chat-service-card > span {
+  display: grid;
+  flex: 0 0 auto;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-white);
+  font-size: 27px;
+}
+
+.chat-service-card p {
+  margin: 0;
+  color: var(--color-neutral-700);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.chat-service-card div > p:first-child {
+  margin-bottom: 4px;
+  color: var(--color-brand-strong);
+  font-weight: 700;
+}
+
+.chat-service-card h3 {
+  margin: 0 0 7px;
+  font-size: 19px;
 }
 
 @media (max-width: 1050px) {

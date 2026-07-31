@@ -106,6 +106,8 @@ export type MonthlyCashFlowStatus =
 export type AnnualGoalStatus = 'below_target' | 'target_met' | 'above_target';
 
 export interface PriceComparisonSample {
+  name: string | null;
+  address: string | null;
   deposit: number;
   monthly_rent: number;
   exclusive_area_m2: number;
@@ -143,6 +145,7 @@ export interface AnalysisCandidateResult {
     difference_from_median: number | null;
     difference_rate_from_median: number | null;
     price_percentile: number | null;
+    candidate_equivalent_monthly_cost: number | null;
     samples: PriceComparisonSample[];
     reason: string | null;
   };

@@ -6,6 +6,7 @@ import './styles/tokens.css';
 import './styles/global.css';
 import './styles/landing.css';
 import './styles/analysis-form.css';
+import './styles/chat.css';
 
 const root = document.getElementById('root');
 

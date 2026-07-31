@@ -801,7 +801,7 @@
 
 .sample-table {
   width: 100%;
-  min-width: 760px;
+  min-width: 1040px;
   border-collapse: collapse;
 }
 
@@ -825,6 +825,11 @@
 .sample-table th {
   background: var(--color-neutral-50);
   color: var(--color-neutral-700);
+}
+
+.sample-table th:nth-child(-n + 2),
+.sample-table td:nth-child(-n + 2) {
+  text-align: left;
 }
 
 .sample-table th button {
@@ -852,6 +857,16 @@
   color: var(--color-neutral-900);
   background: var(--color-brand-pale);
   font-weight: 700;
+}
+
+.sample-table__my-property td:first-child small {
+  display: inline-block;
+  margin-left: 7px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  color: var(--color-brand-strong);
+  background: var(--color-white);
+  font-size: 10px;
 }
 
 .sample-table td:last-child {
