@@ -258,7 +258,7 @@ export function ChatPage({
       <header className="chat-header">
         <a href="/" aria-label="홈으로 이동">
           <HomeIcon />
-          <strong>청년 주거 금융 도우미</strong>
+          <strong>가늠</strong>
         </a>
         <div>
           <button onClick={onBack} type="button">← 분석 결과로 돌아가기</button>
@@ -286,7 +286,7 @@ export function ChatPage({
               <div className="chat-welcome">
                 <span aria-hidden="true">🤖</span>
                 <div>
-                  <strong>안녕하세요! 청년 주거 금융 도우미입니다.</strong>
+                  <strong>안녕하세요! 가늠입니다.</strong>
                   <p>분석 결과나 주거, 대출, 재무관리에 대해 궁금한 점을 자유롭게 질문해 주세요.</p>
                 </div>
               </div>

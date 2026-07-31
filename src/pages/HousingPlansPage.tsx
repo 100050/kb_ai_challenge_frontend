@@ -39,6 +39,7 @@ interface HousingFormValues {
   maintenanceFee: string;
   utilities: string;
   transportationCost: string;
+  hasDepositLoan: boolean;
   depositLoanAmount: string;
   annualInterestRate: string;
   brokerageFee: string;
@@ -62,6 +63,7 @@ function createEmptyPlan(index: number): HousingFormValues {
     maintenanceFee: '',
     utilities: '',
     transportationCost: '',
+    hasDepositLoan: false,
     depositLoanAmount: '',
     annualInterestRate: '',
     brokerageFee: '',
@@ -86,7 +88,12 @@ function planToValues(plan: HousingPlan): HousingFormValues {
     city,
     district,
     neighborhood,
-    propertyType: plan.property_type ?? '',
+    propertyType:
+      plan.property_type === 'multi_family'
+        ? 'row_house'
+        : plan.property_type === 'multi_household'
+          ? 'detached_house'
+          : (plan.property_type ?? ''),
     exclusiveArea:
       plan.exclusive_area_m2 === null ? '' : String(plan.exclusive_area_m2),
     housingType: plan.housing_type ?? '',
@@ -95,6 +102,7 @@ function planToValues(plan: HousingPlan): HousingFormValues {
     maintenanceFee: wonToManwon(plan.maintenance_fee),
     utilities: wonToManwon(plan.utilities),
     transportationCost: wonToManwon(plan.transportation_cost),
+    hasDepositLoan: plan.loan_plan !== null,
     depositLoanAmount: wonToManwon(plan.loan_plan?.deposit_loan_amount ?? null),
     annualInterestRate:
       plan.loan_plan === null ? '' : String(plan.loan_plan.annual_interest_rate),
@@ -128,10 +136,12 @@ function valuesToRequest(values: HousingFormValues) {
     maintenance_fee: manwon(values.maintenanceFee),
     utilities: manwon(values.utilities),
     transportation_cost: manwon(values.transportationCost),
-    loan_plan: {
-      deposit_loan_amount: manwon(values.depositLoanAmount),
-      annual_interest_rate: Number(values.annualInterestRate || 0),
-    },
+    loan_plan: values.hasDepositLoan
+      ? {
+          deposit_loan_amount: manwon(values.depositLoanAmount),
+          annual_interest_rate: Number(values.annualInterestRate || 0),
+        }
+      : null,
     additional_costs: {
       brokerage_fee: manwon(values.brokerageFee),
       moving_cost: manwon(values.movingCost),
@@ -164,9 +174,7 @@ function valuesToPartialRequest(values: HousingFormValues) {
     ...(values.transportationCost
       ? { transportation_cost: request.transportation_cost }
       : {}),
-    ...(values.depositLoanAmount || values.annualInterestRate
-      ? { loan_plan: request.loan_plan }
-      : {}),
+    loan_plan: request.loan_plan,
     ...(values.brokerageFee || values.movingCost || values.otherMoveInCost
       ? { additional_costs: request.additional_costs }
       : {}),
@@ -174,6 +182,7 @@ function valuesToPartialRequest(values: HousingFormValues) {
 }
 
 interface TextFieldProps {
+  disabled?: boolean;
   id: string;
   label: string;
   onChange: (value: string) => void;
@@ -182,6 +191,7 @@ interface TextFieldProps {
 }
 
 function TextField({
+  disabled,
   id,
   label,
   onChange,
@@ -193,6 +203,7 @@ function TextField({
       <label htmlFor={id}>{label}</label>
       <input
         className="text-input"
+        disabled={disabled}
         id={id}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
@@ -525,21 +536,21 @@ export function HousingPlansPage({
                         />
                         <TextField
                           id="property-city"
-                          label="시"
+                          label="시/도"
                           onChange={(value) => updateActive('city', value)}
                           placeholder="예: 부산시"
                           value={activePlan.city}
                         />
                         <TextField
                           id="property-district"
-                          label="구"
+                          label="시/군/구"
                           onChange={(value) => updateActive('district', value)}
                           placeholder="예: 동구"
                           value={activePlan.district}
                         />
                         <TextField
                           id="property-neighborhood"
-                          label="동"
+                          label="읍/면/동"
                           onChange={(value) =>
                             updateActive('neighborhood', value)
                           }
@@ -558,25 +569,35 @@ export function HousingPlansPage({
                           >
                             <option value="">선택해 주세요</option>
                             <option value="apartment">아파트</option>
-                            <option value="row_house">연립주택</option>
-                            <option value="multi_family">다세대주택</option>
+                            <option value="row_house">
+                              연립주택/다세대주택
+                            </option>
                             <option value="officetel">오피스텔</option>
-                            <option value="detached_house">단독주택</option>
-                            <option value="multi_household">다가구주택</option>
+                            <option value="detached_house">
+                              단독주택/다가구주택
+                            </option>
                           </select>
                         </div>
-                        <TextField
-                          id="exclusive-area"
-                          label="전용면적(㎡)"
-                          onChange={(value) =>
-                            updateActive(
-                              'exclusiveArea',
-                              value.replace(/[^\d.]/g, ''),
-                            )
-                          }
-                          placeholder="예: 20"
-                          value={activePlan.exclusiveArea}
-                        />
+                        <div className="area-field">
+                          <TextField
+                            id="exclusive-area"
+                            label="전용면적(㎡)"
+                            onChange={(value) =>
+                              updateActive(
+                                'exclusiveArea',
+                                value.replace(/[^\d.]/g, ''),
+                              )
+                            }
+                            placeholder="예: 20"
+                            value={activePlan.exclusiveArea}
+                          />
+                          <p className="area-conversion" aria-live="polite">
+                            {activePlan.exclusiveArea &&
+                            Number(activePlan.exclusiveArea) > 0
+                              ? `약 ${(Number(activePlan.exclusiveArea) / 3.3058).toFixed(1)}평`
+                              : '면적을 입력하면 평수를 알려드려요.'}
+                          </p>
+                        </div>
                         <div className="form-field">
                           <label htmlFor="housing-type">계약 유형</label>
                           <select
@@ -647,9 +668,35 @@ export function HousingPlansPage({
 
                     <div className="housing-bottom-grid">
                       <section className="form-card housing-section">
-                        <h2>보증금 대출</h2>
+                        <div className="loan-section-heading">
+                          <div>
+                            <h2>보증금 대출</h2>
+                            <p>
+                              만기일시상환 기준으로, 대출원금은 만기에
+                              상환하고 분석에는 월 이자만 반영합니다.
+                            </p>
+                          </div>
+                          <label className="loan-toggle">
+                            <input
+                              checked={activePlan.hasDepositLoan}
+                              onChange={(event) => {
+                                updateActive(
+                                  'hasDepositLoan',
+                                  event.target.checked,
+                                );
+                                if (!event.target.checked) {
+                                  updateActive('depositLoanAmount', '');
+                                  updateActive('annualInterestRate', '');
+                                }
+                              }}
+                              type="checkbox"
+                            />
+                            대출 이용
+                          </label>
+                        </div>
                         <div className="goal-field-list">
                           <CurrencyInput
+                            disabled={!activePlan.hasDepositLoan}
                             id="deposit-loan-amount"
                             label="보증금 대출 예정액"
                             onChange={(value) =>
@@ -658,6 +705,7 @@ export function HousingPlansPage({
                             value={activePlan.depositLoanAmount}
                           />
                           <TextField
+                            disabled={!activePlan.hasDepositLoan}
                             id="annual-interest-rate"
                             label="연이자율(%)"
                             onChange={(value) =>

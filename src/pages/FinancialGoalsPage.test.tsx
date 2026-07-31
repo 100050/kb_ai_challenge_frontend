@@ -28,6 +28,17 @@ describe('FinancialGoalsPage', () => {
     expect(
       screen.getByRole('progressbar', { name: '입력 진행률 67%' }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: '월 목표저축액 설명' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('tooltip', {
+        name: '입주 후에도 매달 유지하고 싶은 저축액입니다.',
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: '월 안전여유액 설명' }),
+    ).toBeInTheDocument();
   });
 
   it('서버에서 저장된 자산·재무목표 값을 불러온다', async () => {

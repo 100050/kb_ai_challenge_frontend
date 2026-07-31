@@ -13,7 +13,7 @@ export function AnalysisHeader({
     <header className="analysis-header">
       <a className="analysis-header__brand" href="/" aria-label="홈으로 이동">
         <HomeIcon />
-        <span>청년 주거 금융 도우미</span>
+        <span>가늠</span>
       </a>
       <div className="analysis-header__actions">
         {saveStatus ? <span>{saveStatus}</span> : null}

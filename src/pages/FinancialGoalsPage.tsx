@@ -341,6 +341,7 @@ export function FinancialGoalsPage({
                     </div>
                     <div className="goal-field-list">
                       <CurrencyInput
+                        description="입주 후에도 매달 유지하고 싶은 저축액입니다."
                         error={errors.targetMonthlySavings}
                         id="target-monthly-savings"
                         label="월 목표저축액"
@@ -351,6 +352,7 @@ export function FinancialGoalsPage({
                         value={values.targetMonthlySavings}
                       />
                       <CurrencyInput
+                        description="생활비와 주거비, 대출상환액, 목표저축액을 빼고도 매달 남겨둘 여유금입니다."
                         error={errors.monthlySafetyMargin}
                         id="monthly-safety-margin"
                         label="월 안전여유액"

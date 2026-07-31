@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
@@ -29,12 +29,59 @@ describe('HousingPlansPage', () => {
       screen.getByRole('progressbar', { name: '입력 진행률 100%' }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText('매물 이름')).toBeInTheDocument();
-    expect(screen.getByLabelText('시')).toBeInTheDocument();
-    expect(screen.getByLabelText('구')).toBeInTheDocument();
-    expect(screen.getByLabelText('동')).toBeInTheDocument();
+    expect(screen.getByLabelText('시/도')).toBeInTheDocument();
+    expect(screen.getByLabelText('시/군/구')).toBeInTheDocument();
+    expect(screen.getByLabelText('읍/면/동')).toBeInTheDocument();
     expect(screen.getByLabelText('보증금 대출 예정액')).toBeInTheDocument();
     expect(screen.getByLabelText('중개보수')).toBeInTheDocument();
     expect(screen.queryByLabelText('법정동 코드')).not.toBeInTheDocument();
+  });
+
+  it('주택 유형을 4개의 결합 항목으로 표시한다', () => {
+    render(
+      <HousingPlansPage
+        onExit={() => undefined}
+        onNext={() => undefined}
+        onPrevious={() => undefined}
+      />,
+    );
+
+    const options = within(screen.getByLabelText('주택 유형'))
+      .getAllByRole('option')
+      .map((option) => option.textContent);
+    expect(options).toEqual([
+      '선택해 주세요',
+      '아파트',
+      '연립주택/다세대주택',
+      '오피스텔',
+      '단독주택/다가구주택',
+    ]);
+  });
+
+  it('면적을 평수로 환산하고 대출 선택 시에만 입력을 활성화한다', async () => {
+    const user = userEvent.setup();
+    render(
+      <HousingPlansPage
+        onExit={() => undefined}
+        onNext={() => undefined}
+        onPrevious={() => undefined}
+      />,
+    );
+
+    const loanAmount = screen.getByLabelText('보증금 대출 예정액');
+    const interestRate = screen.getByLabelText('연이자율(%)');
+    expect(loanAmount).toBeDisabled();
+    expect(interestRate).toBeDisabled();
+
+    await user.type(screen.getByLabelText('전용면적(㎡)'), '33.058');
+    expect(screen.getByText('약 10.0평')).toBeInTheDocument();
+    expect(
+      screen.getByText(/^만기일시상환 기준으로/),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('checkbox', { name: '대출 이용' }));
+    expect(loanAmount).toBeEnabled();
+    expect(interestRate).toBeEnabled();
   });
 
   it('독립 화면에서 후보 매물을 추가하고 삭제한다', async () => {
@@ -117,9 +164,9 @@ describe('HousingPlansPage', () => {
     );
 
     expect(await screen.findByLabelText('매물 이름')).toHaveValue('역삼 원룸');
-    expect(screen.getByLabelText('시')).toHaveValue('서울특별시');
-    expect(screen.getByLabelText('구')).toHaveValue('강남구');
-    expect(screen.getByLabelText('동')).toHaveValue('역삼동');
+    expect(screen.getByLabelText('시/도')).toHaveValue('서울특별시');
+    expect(screen.getByLabelText('시/군/구')).toHaveValue('강남구');
+    expect(screen.getByLabelText('읍/면/동')).toHaveValue('역삼동');
     expect(screen.getByLabelText('보증금')).toHaveValue('1000');
     expect(screen.getByLabelText('월세')).toHaveValue('70');
   });
