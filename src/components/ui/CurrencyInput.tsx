@@ -20,6 +20,9 @@ export function CurrencyInput({
 }: CurrencyInputProps) {
   const errorId = `${id}-error`;
   const descriptionId = `${id}-description`;
+  const displayValue = value
+    ? Number(value).toLocaleString('ko-KR')
+    : '';
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     onChange(event.target.value.replace(/[^\d]/g, ''));
@@ -56,7 +59,7 @@ export function CurrencyInput({
           id={id}
           inputMode="numeric"
           onChange={handleChange}
-          value={value}
+          value={displayValue}
         />
         <span>만원</span>
       </div>

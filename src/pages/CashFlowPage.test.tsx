@@ -40,7 +40,7 @@ describe('CashFlowPage', () => {
     );
 
     expect(await screen.findByLabelText('세후 월 소득')).toHaveValue('350');
-    expect(screen.getByLabelText('월 생활비')).toHaveValue('130');
+    expect(screen.getByLabelText('월 비주거교통생활비')).toHaveValue('130');
     expect(screen.getByLabelText('기존 대출 월 상환액')).toHaveValue('20');
   });
 
@@ -74,7 +74,7 @@ describe('CashFlowPage', () => {
     );
 
     expect(await screen.findByLabelText('세후 월 소득')).toHaveValue('350');
-    expect(screen.getByLabelText('월 생활비')).toHaveValue('');
+    expect(screen.getByLabelText('월 비주거교통생활비')).toHaveValue('');
     expect(screen.getByLabelText('기존 대출 월 상환액')).toHaveValue('');
   });
 
@@ -120,7 +120,7 @@ describe('CashFlowPage', () => {
     );
 
     await user.type(await screen.findByLabelText('세후 월 소득'), '350');
-    await user.type(screen.getByLabelText('월 생활비'), '130');
+    await user.type(screen.getByLabelText('월 비주거교통생활비'), '130');
     await user.type(screen.getByLabelText('기존 대출 월 상환액'), '20');
     await user.click(screen.getByRole('button', { name: '저장하고 다음' }));
 

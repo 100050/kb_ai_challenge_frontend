@@ -33,12 +33,17 @@ describe('FinancialGoalsPage', () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole('tooltip', {
-        name: '입주 후에도 매달 유지하고 싶은 저축액입니다.',
+        name: '적금·청약 등 매월 유지할 저축 및 자산형성 금액',
       }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: '월 안전여유액 설명' }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('checkbox', {
+        name: '새 계약일 전에 기존 임차보증금을 받을 수 있어요',
+      }),
+    ).not.toBeChecked();
   });
 
   it('서버에서 저장된 자산·재무목표 값을 불러온다', async () => {
@@ -60,6 +65,7 @@ describe('FinancialGoalsPage', () => {
             available_cash: 75_000_000,
             minimum_emergency_fund: 10_000_000,
             recoverable_existing_rental_deposit: 20_000_000,
+            existing_rental_deposit_available_before_contract: true,
           },
           housing_plans: [],
           created_at: '2026-07-23T03:00:00Z',
@@ -77,14 +83,19 @@ describe('FinancialGoalsPage', () => {
     );
 
     expect(await screen.findByLabelText('사용 가능한 현금성 자산')).toHaveValue(
-      '7500',
+      '7,500',
     );
     expect(screen.getByLabelText('반환받을 기존 임차보증금')).toHaveValue(
-      '2000',
+      '2,000',
     );
     expect(screen.getByLabelText('월 목표저축액')).toHaveValue('70');
     expect(screen.getByLabelText('월 안전여유액')).toHaveValue('30');
-    expect(screen.getByLabelText('최소 비상자금')).toHaveValue('1000');
+    expect(screen.getByLabelText('최소 비상자금')).toHaveValue('1,000');
+    expect(
+      screen.getByRole('checkbox', {
+        name: '새 계약일 전에 기존 임차보증금을 받을 수 있어요',
+      }),
+    ).toBeChecked();
     expect(screen.getAllByText('9,500만 원')).toHaveLength(2);
   });
 
@@ -146,6 +157,7 @@ describe('FinancialGoalsPage', () => {
         available_cash: 75_000_000,
         minimum_emergency_fund: 10_000_000,
         recoverable_existing_rental_deposit: 20_000_000,
+        existing_rental_deposit_available_before_contract: false,
       });
     });
     expect(onNext).toHaveBeenCalledOnce();

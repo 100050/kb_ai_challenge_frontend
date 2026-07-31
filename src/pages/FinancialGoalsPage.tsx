@@ -44,6 +44,7 @@ function wonToManwon(value: number | null) {
 
 function valuesToFinancialGoals(
   values: FinancialGoalsFormValues,
+  isDepositAvailableBeforeContract: boolean,
 ): FinancialGoals {
   return {
     target_monthly_savings: Number(values.targetMonthlySavings) * 10_000,
@@ -52,16 +53,26 @@ function valuesToFinancialGoals(
     minimum_emergency_fund: Number(values.minimumEmergencyFund) * 10_000,
     recoverable_existing_rental_deposit:
       Number(values.recoverableDeposit) * 10_000,
+    existing_rental_deposit_available_before_contract:
+      isDepositAvailableBeforeContract,
   };
 }
 
 function valuesToPartialFinancialGoals(
   values: FinancialGoalsFormValues,
+  isDepositAvailableBeforeContract: boolean,
 ): Partial<FinancialGoals> {
-  const goals: Partial<FinancialGoals> = {};
+  const goals: Partial<FinancialGoals> = {
+    existing_rental_deposit_available_before_contract:
+      isDepositAvailableBeforeContract,
+  };
+  type FinancialGoalMoneyKey = Exclude<
+    keyof FinancialGoals,
+    'existing_rental_deposit_available_before_contract'
+  >;
   const fields: {
     formKey: keyof FinancialGoalsFormValues;
-    apiKey: keyof FinancialGoals;
+    apiKey: FinancialGoalMoneyKey;
   }[] = [
     { formKey: 'targetMonthlySavings', apiKey: 'target_monthly_savings' },
     { formKey: 'monthlySafetyMargin', apiKey: 'monthly_safety_margin' },
@@ -111,6 +122,8 @@ export function FinancialGoalsPage({
   onPrevious,
 }: FinancialGoalsPageProps) {
   const [values, setValues] = useState<FinancialGoalsFormValues>(emptyValues);
+  const [isDepositAvailableBeforeContract, setIsDepositAvailableBeforeContract] =
+    useState(false);
   const [errors, setErrors] = useState<FinancialGoalsFormErrors>({});
   const [isLoading, setIsLoading] = useState(Boolean(analysisId));
   const [isSaving, setIsSaving] = useState(false);
@@ -147,8 +160,13 @@ export function FinancialGoalsPage({
               analysis.financial_goals.minimum_emergency_fund,
             ),
           });
+          setIsDepositAvailableBeforeContract(
+            analysis.financial_goals
+              .existing_rental_deposit_available_before_contract ?? false,
+          );
         } else {
           setValues(emptyValues);
+          setIsDepositAvailableBeforeContract(false);
         }
       })
       .catch((error: unknown) => {
@@ -171,8 +189,17 @@ export function FinancialGoalsPage({
       return null;
     }
 
-    return Number(values.availableCash) + Number(values.recoverableDeposit);
-  }, [values.availableCash, values.recoverableDeposit]);
+    return (
+      Number(values.availableCash) +
+      (isDepositAvailableBeforeContract
+        ? Number(values.recoverableDeposit)
+        : 0)
+    );
+  }, [
+    isDepositAvailableBeforeContract,
+    values.availableCash,
+    values.recoverableDeposit,
+  ]);
 
   const updateValue = (
     key: keyof FinancialGoalsFormValues,
@@ -191,7 +218,10 @@ export function FinancialGoalsPage({
   };
 
   const saveDraft = async () => {
-    const partialGoals = valuesToPartialFinancialGoals(values);
+    const partialGoals = valuesToPartialFinancialGoals(
+      values,
+      isDepositAvailableBeforeContract,
+    );
 
     if (!analysisId || Object.keys(partialGoals).length === 0) {
       setSaveError('임시 저장할 내용을 먼저 입력해 주세요.');
@@ -231,7 +261,10 @@ export function FinancialGoalsPage({
       if (analysisId) {
         await updateFinancialGoals(
           analysisId,
-          valuesToFinancialGoals(values),
+          valuesToFinancialGoals(
+            values,
+            isDepositAvailableBeforeContract,
+          ),
         );
       }
       onNext();
@@ -320,6 +353,20 @@ export function FinancialGoalsPage({
                         placeholder="없다면 0"
                         value={values.recoverableDeposit}
                       />
+                      <label className="deposit-availability-check">
+                        <input
+                          checked={isDepositAvailableBeforeContract}
+                          onChange={(event) => {
+                            setIsDepositAvailableBeforeContract(
+                              event.target.checked,
+                            );
+                            setSaveError('');
+                            setSaveMessage('');
+                          }}
+                          type="checkbox"
+                        />
+                        새 계약일 전에 기존 임차보증금을 받을 수 있어요
+                      </label>
                     </div>
                     <div className="asset-total">
                       <span>계약 활용 가능 총자금</span>
@@ -341,7 +388,7 @@ export function FinancialGoalsPage({
                     </div>
                     <div className="goal-field-list">
                       <CurrencyInput
-                        description="입주 후에도 매달 유지하고 싶은 저축액입니다."
+                        description="적금·청약 등 매월 유지할 저축 및 자산형성 금액"
                         error={errors.targetMonthlySavings}
                         id="target-monthly-savings"
                         label="월 목표저축액"
@@ -352,7 +399,7 @@ export function FinancialGoalsPage({
                         value={values.targetMonthlySavings}
                       />
                       <CurrencyInput
-                        description="생활비와 주거비, 대출상환액, 목표저축액을 빼고도 매달 남겨둘 여유금입니다."
+                        description="예기치 않은 월 지출에 대비하기 위한 예산상 완충 기준"
                         error={errors.monthlySafetyMargin}
                         id="monthly-safety-margin"
                         label="월 안전여유액"
@@ -376,11 +423,6 @@ export function FinancialGoalsPage({
                   </section>
                 </div>
 
-                <div className="financial-notice">
-                  <span aria-hidden="true">i</span>
-                  입주 후에도 입력한 최소 비상자금을 남기는 조건으로
-                  분석합니다.
-                </div>
               </section>
 
               <aside className="input-summary" aria-label="현재 입력 요약">
@@ -414,9 +456,6 @@ export function FinancialGoalsPage({
                       ? '계산 대기'
                       : `${availableTotal.toLocaleString('ko-KR')}만 원`}
                   </strong>
-                </div>
-                <div className="summary-tip">
-                  다음 단계에서 후보 매물과 대출·추가비용을 입력합니다.
                 </div>
               </aside>
 

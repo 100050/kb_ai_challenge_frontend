@@ -235,6 +235,26 @@
   padding-top: 26px;
 }
 
+label[for="recoverable-deposit"] {
+  white-space: nowrap;
+}
+
+.deposit-availability-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: -8px;
+  color: var(--color-neutral-700);
+  font-size: 12px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.deposit-availability-check input {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
 .asset-total {
   display: flex;
   align-items: center;
@@ -1084,6 +1104,24 @@
 
 .currency-input--error {
   border-color: var(--color-danger);
+}
+
+.currency-input:has(input:disabled),
+.text-input:disabled {
+  border-color: var(--color-neutral-200);
+  color: var(--color-neutral-500);
+  background: var(--color-neutral-100);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.currency-input input:disabled {
+  color: var(--color-neutral-500);
+  cursor: not-allowed;
+}
+
+.currency-input:has(input:disabled) > span {
+  color: var(--color-neutral-500);
 }
 
 .currency-input input {

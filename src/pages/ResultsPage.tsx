@@ -5,6 +5,7 @@ import { AnalysisHeader } from '../components/layout/AnalysisHeader';
 import { StepSidebar } from '../components/layout/StepSidebar';
 import { HomeIcon, TargetIcon, WalletIcon } from '../components/ui/Icons';
 import {
+  getAnalysis,
   getAnalysisResult,
   getHousingPlan,
 } from '../features/analysis/api/analysisApi';
@@ -77,6 +78,7 @@ const previewResult: AnalysisResult = {
       name: '매물 1',
       memo: '역세권, 엘리베이터 있음',
       initial_funds: {
+        available_cash: 95_000_000,
         initial_cash_required: 11_600_000,
         post_move_liquid_assets: 83_400_000,
         emergency_fund_gap: 73_400_000,
@@ -84,6 +86,7 @@ const previewResult: AnalysisResult = {
       },
       monthly_cash_flow: {
         monthly_housing_and_transport_cost: 930_000,
+        essential_monthly_outflow: 2_430_000,
         actual_monthly_balance: 370_000,
         monthly_budget_margin: 70_000,
         status: 'sufficient',
@@ -115,6 +118,7 @@ const previewResult: AnalysisResult = {
       name: '매물 2',
       memo: null,
       initial_funds: {
+        available_cash: 95_000_000,
         initial_cash_required: 88_000_000,
         post_move_liquid_assets: 7_000_000,
         emergency_fund_gap: -3_000_000,
@@ -122,6 +126,7 @@ const previewResult: AnalysisResult = {
       },
       monthly_cash_flow: {
         monthly_housing_and_transport_cost: 1_150_000,
+        essential_monthly_outflow: 2_650_000,
         actual_monthly_balance: 150_000,
         monthly_budget_margin: -150_000,
         status: 'savings_target_shortfall',
@@ -153,6 +158,7 @@ const previewResult: AnalysisResult = {
       name: '매물 3',
       memo: '채광 좋음',
       initial_funds: {
+        available_cash: 95_000_000,
         initial_cash_required: 25_000_000,
         post_move_liquid_assets: 70_000_000,
         emergency_fund_gap: 60_000_000,
@@ -160,6 +166,7 @@ const previewResult: AnalysisResult = {
       },
       monthly_cash_flow: {
         monthly_housing_and_transport_cost: 980_000,
+        essential_monthly_outflow: 2_480_000,
         actual_monthly_balance: 320_000,
         monthly_budget_margin: 20_000,
         status: 'sufficient',
@@ -592,6 +599,9 @@ export function ResultsPage({
   const [activeId, setActiveId] = useState(
     analysisId ? '' : previewResult.candidates[0].property_id,
   );
+  const [monthlyIncome, setMonthlyIncome] = useState<number | null>(
+    analysisId ? null : 3_500_000,
+  );
   const [isLoading, setIsLoading] = useState(Boolean(analysisId));
   const [error, setError] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
@@ -602,9 +612,15 @@ export function ResultsPage({
     }
 
     const controller = new AbortController();
-    getAnalysisResult(analysisId, controller.signal)
-      .then((response) => {
+    Promise.all([
+      getAnalysisResult(analysisId, controller.signal),
+      getAnalysis(analysisId, controller.signal),
+    ])
+      .then(([response, analysis]) => {
         setResult(response);
+        setMonthlyIncome(
+          analysis.cash_flow?.after_tax_monthly_income ?? null,
+        );
         setActiveId(response.candidates[0]?.property_id ?? '');
         return Promise.allSettled(
           response.candidates.map((candidate) =>
@@ -772,6 +788,13 @@ export function ResultsPage({
                   title="초기자금 및 유동성"
                 >
                   <Metric
+                    isNegative={activeCandidate.initial_funds.available_cash < 0}
+                    label="사용 가능 현금"
+                    value={formatWon(
+                      activeCandidate.initial_funds.available_cash,
+                    )}
+                  />
+                  <Metric
                     label="초기 필요자금"
                     value={formatWon(
                       activeCandidate.initial_funds.initial_cash_required,
@@ -811,10 +834,16 @@ export function ResultsPage({
                   title="월 현금흐름"
                 >
                   <Metric
-                    label="월 주거·교통비"
+                    label="월 수익"
+                    value={
+                      monthlyIncome === null ? '—' : formatWon(monthlyIncome)
+                    }
+                  />
+                  <Metric
+                    label="필수 월 현금유출"
                     value={formatWon(
                       activeCandidate.monthly_cash_flow
-                        .monthly_housing_and_transport_cost,
+                        .essential_monthly_outflow,
                     )}
                   />
                   <Metric
@@ -856,7 +885,7 @@ export function ResultsPage({
                       activeCandidate.annual_goal
                         .expected_resources_after_one_year < 0
                     }
-                    label="1년 후 예상 재무자원"
+                    label="1년 후 예상 유동재원"
                     value={formatWon(
                       activeCandidate.annual_goal
                         .expected_resources_after_one_year,

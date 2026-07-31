@@ -490,8 +490,7 @@ export function HousingPlansPage({
                     <span>STEP 3</span>
                     <h1>후보 매물과 자금 계획을 입력해 주세요</h1>
                     <p>
-                      매물별 계약 조건, 대출과 입주 비용을 한 번에
-                      입력합니다.
+                      매물별 계약 조건, 대출과 입주 비용을 입력합니다.
                     </p>
                   </div>
                   <button
@@ -544,23 +543,6 @@ export function HousingPlansPage({
                           placeholder="예: 역삼 원룸"
                           value={activePlan.name}
                         />
-                        <div className="form-field housing-memo-field">
-                          <label htmlFor="property-memo">매물 메모 (선택)</label>
-                          <textarea
-                            className="text-input housing-memo-input"
-                            id="property-memo"
-                            maxLength={2000}
-                            onChange={(event) =>
-                              updateActive('memo', event.target.value)
-                            }
-                            placeholder="예: 역세권, 엘리베이터 있음, 채광 좋음"
-                            rows={4}
-                            value={activePlan.memo}
-                          />
-                          <span className="housing-memo-count">
-                            {activePlan.memo.length.toLocaleString('ko-KR')} / 2,000자
-                          </span>
-                        </div>
                         <TextField
                           id="property-city"
                           label="시/도"
@@ -594,14 +576,14 @@ export function HousingPlansPage({
                             }
                             value={activePlan.propertyType}
                           >
-                            <option value="">선택해 주세요</option>
+                            <option disabled value="">선택해 주세요</option>
                             <option value="apartment">아파트</option>
                             <option value="row_house">
-                              연립주택/다세대주택
+                              연립·다세대
                             </option>
                             <option value="officetel">오피스텔</option>
                             <option value="detached_house">
-                              단독주택/다가구주택
+                              단독·다가구
                             </option>
                           </select>
                         </div>
@@ -638,7 +620,7 @@ export function HousingPlansPage({
                             }
                             value={activePlan.housingType}
                           >
-                            <option value="">선택해 주세요</option>
+                            <option disabled value="">선택해 주세요</option>
                             <option value="monthly_rent">월세</option>
                             <option value="jeonse">전세</option>
                           </select>
@@ -776,6 +758,26 @@ export function HousingPlansPage({
                         </div>
                       </section>
                     </div>
+                    <section className="form-card housing-section housing-extra-info">
+                      <h2>매물 기타 정보</h2>
+                      <div className="form-field housing-memo-field">
+                        <label htmlFor="property-memo">매물 메모 (선택)</label>
+                        <textarea
+                          className="text-input housing-memo-input"
+                          id="property-memo"
+                          maxLength={2000}
+                          onChange={(event) =>
+                            updateActive('memo', event.target.value)
+                          }
+                          placeholder="예: 역세권, 엘리베이터 있음, 채광 좋음"
+                          rows={4}
+                          value={activePlan.memo}
+                        />
+                        <span className="housing-memo-count">
+                          {activePlan.memo.length.toLocaleString('ko-KR')} / 2,000자
+                        </span>
+                      </div>
+                    </section>
                   </div>
                 ) : (
                   <div className="empty-properties">

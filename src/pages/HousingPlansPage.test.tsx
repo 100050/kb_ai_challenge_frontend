@@ -54,10 +54,21 @@ describe('HousingPlansPage', () => {
     expect(options).toEqual([
       '선택해 주세요',
       '아파트',
-      '연립주택/다세대주택',
+      '연립·다세대',
       '오피스텔',
-      '단독주택/다가구주택',
+      '단독·다가구',
     ]);
+    expect(options[0]).toBe('선택해 주세요');
+    expect(
+      within(screen.getByLabelText('주택 유형')).getByRole('option', {
+        name: '선택해 주세요',
+      }),
+    ).toBeDisabled();
+    expect(
+      within(screen.getByLabelText('계약 유형')).getByRole('option', {
+        name: '선택해 주세요',
+      }),
+    ).toBeDisabled();
   });
 
   it('면적을 평수로 환산하고 대출 선택 시에만 입력을 활성화한다', async () => {
@@ -186,7 +197,7 @@ describe('HousingPlansPage', () => {
     expect(screen.getByLabelText('시/도')).toHaveValue('서울특별시');
     expect(screen.getByLabelText('시/군/구')).toHaveValue('강남구');
     expect(screen.getByLabelText('읍/면/동')).toHaveValue('역삼동');
-    expect(screen.getByLabelText('보증금')).toHaveValue('1000');
+    expect(screen.getByLabelText('보증금')).toHaveValue('1,000');
     expect(screen.getByLabelText('월세')).toHaveValue('70');
     expect(screen.getByRole('checkbox', { name: '대출 이용' })).not.toBeChecked();
 

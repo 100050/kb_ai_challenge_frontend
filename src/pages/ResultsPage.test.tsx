@@ -108,6 +108,7 @@ describe('ResultsPage', () => {
               property_id: '43b49e66-0fa2-4e0d-aee6-2f6cbc827290',
               name: '역삼 원룸',
               initial_funds: {
+                available_cash: 75_000_000,
                 initial_cash_required: 86_000_000,
                 post_move_liquid_assets: -11_000_000,
                 emergency_fund_gap: -21_000_000,
@@ -115,6 +116,7 @@ describe('ResultsPage', () => {
               },
               monthly_cash_flow: {
                 monthly_housing_and_transport_cost: 930_000,
+                essential_monthly_outflow: 2_430_000,
                 actual_monthly_balance: 370_000,
                 monthly_budget_margin: 70_000,
                 status: 'sufficient',
@@ -143,6 +145,23 @@ describe('ResultsPage', () => {
             },
           ],
           generated_at: '2026-07-24T03:31:00Z',
+        }),
+      ),
+      http.get(`${apiBaseUrl}/analyses/${analysisId}`, () =>
+        HttpResponse.json({
+          analysis_id: analysisId,
+          status: 'completed',
+          current_step: 'confirmation',
+          progress: 100,
+          cash_flow: {
+            after_tax_monthly_income: 3_500_000,
+            monthly_living_expenses_excluding_housing_and_transport: 1_300_000,
+            existing_loan_monthly_payment: 200_000,
+          },
+          financial_goals: null,
+          housing_plans: [],
+          created_at: '2026-07-23T03:00:00Z',
+          updated_at: '2026-07-24T03:31:00Z',
         }),
       ),
       http.get(
@@ -184,6 +203,13 @@ describe('ResultsPage', () => {
     expect(screen.getByText('목표 달성')).toBeInTheDocument();
     expect(screen.queryByText('목표 초과')).not.toBeInTheDocument();
     expect(screen.getByText('8,600만 원')).toBeInTheDocument();
+    expect(screen.getByText('사용 가능 현금')).toBeInTheDocument();
+    expect(screen.getByText('7,500만 원')).toBeInTheDocument();
+    expect(screen.getByText('월 수익')).toBeInTheDocument();
+    expect(screen.getByText('350만 원')).toBeInTheDocument();
+    expect(screen.getByText('필수 월 현금유출')).toBeInTheDocument();
+    expect(screen.getByText('243만 원')).toBeInTheDocument();
+    expect(screen.queryByText('월 주거·교통비')).not.toBeInTheDocument();
     expect(screen.getByText('-1,100만 원')).toHaveClass(
       'result-metric__value--negative',
     );

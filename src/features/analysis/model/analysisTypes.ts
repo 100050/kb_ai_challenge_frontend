@@ -10,6 +10,7 @@ export interface FinancialGoals {
   available_cash: number | null;
   minimum_emergency_fund: number | null;
   recoverable_existing_rental_deposit: number | null;
+  existing_rental_deposit_available_before_contract: boolean | null;
 }
 
 export interface Analysis {
@@ -122,6 +123,7 @@ export interface AnalysisCandidateResult {
   name: string;
   memo: string | null;
   initial_funds: {
+    available_cash: number;
     initial_cash_required: number;
     post_move_liquid_assets: number;
     emergency_fund_gap: number;
@@ -129,6 +131,7 @@ export interface AnalysisCandidateResult {
   };
   monthly_cash_flow: {
     monthly_housing_and_transport_cost: number;
+    essential_monthly_outflow: number;
     actual_monthly_balance: number;
     monthly_budget_margin: number;
     status: MonthlyCashFlowStatus;

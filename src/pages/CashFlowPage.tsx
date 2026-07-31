@@ -279,7 +279,7 @@ export function CashFlowPage({
                     <CurrencyInput
                       error={errors.livingExpenses}
                       id="living-expenses"
-                      label="월 생활비"
+                      label="월 비주거교통생활비"
                       onChange={(value) => updateValue('livingExpenses', value)}
                       placeholder="예: 130"
                       value={values.livingExpenses}
@@ -314,7 +314,7 @@ export function CashFlowPage({
                     <dd>{formatManwon(values.income)}</dd>
                   </div>
                   <div>
-                    <dt>월 생활비</dt>
+                    <dt>월 비주거교통생활비</dt>
                     <dd>{formatManwon(values.livingExpenses)}</dd>
                   </div>
                   <div>
@@ -323,15 +323,12 @@ export function CashFlowPage({
                   </div>
                 </dl>
                 <div className="summary-total">
-                  <span>현재 월 고정지출</span>
+                  <span>월 비주거교통생활비</span>
                   <strong>
                     {totalMonthlyOutflow === null
                       ? '계산 대기'
                       : `${totalMonthlyOutflow.toLocaleString('ko-KR')}만 원`}
                   </strong>
-                </div>
-                <div className="summary-tip">
-                  다음 단계에서 자산과 재무목표를 입력합니다.
                 </div>
               </aside>
 
