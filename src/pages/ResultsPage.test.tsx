@@ -30,10 +30,22 @@ describe('ResultsPage', () => {
       screen.getByRole('heading', { name: '초기자금 및 유동성' }),
     ).toBeInTheDocument();
     expect(
+      screen.getByText('초기자금과 최소 비상자금을 모두 충족합니다.'),
+    ).toBeInTheDocument();
+    expect(
       screen.getByRole('heading', { name: '월 현금흐름' }),
     ).toBeInTheDocument();
     expect(
+      screen.getByText(/안전여유.*확보 후/).closest('.cash-flow-summary'),
+    ).toHaveClass('cash-flow-summary--success');
+    expect(
       screen.getByRole('heading', { name: '1년 재무목표' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('1년 재무목표를 달성하고도 여유가 예상됩니다.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/분석 결과는 입력한 금액과 현재 조건이 유지된다는/),
     ).toBeInTheDocument();
     expect(screen.queryByText('추천 매물')).not.toBeInTheDocument();
     expect(
@@ -44,8 +56,20 @@ describe('ResultsPage', () => {
         name: /비교군 중앙값.*현재 매물/,
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText('128개')).toBeInTheDocument();
-    expect(screen.getByText('역세권, 엘리베이터 있음')).toBeInTheDocument();
+    expect(screen.getByText('비교 표본 128건')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: '가격 백분위 설명' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('tooltip')).toBeInTheDocument();
+    await user.click(
+      screen.getByRole('button', { name: '비교 기준 보기' }),
+    );
+    expect(screen.getByText('최근 12개월')).toBeInTheDocument();
+    expect(screen.getByText('오피스텔')).toBeInTheDocument();
+    expect(screen.getByText('17㎡ ~ 23㎡ (±15%)')).toBeInTheDocument();
+    expect(
+      screen.getByText(/매물 메모: 역세권, 엘리베이터 있음/),
+    ).toBeInTheDocument();
 
     const priceTabs = screen.getByRole('tablist', {
       name: '가격 분석 매물 선택',
@@ -63,7 +87,7 @@ describe('ResultsPage', () => {
 
     await user.click(within(priceTabs).getByRole('tab', { name: '매물 3' }));
 
-    expect(screen.getByText('채광 좋음')).toBeInTheDocument();
+    expect(screen.getByText(/매물 메모: 채광 좋음/)).toBeInTheDocument();
 
     const table = screen.getByRole('table', {
       name: '전체 실거래 표본 3개',
@@ -107,7 +131,7 @@ describe('ResultsPage', () => {
         name: /비교군 중앙값.*현재 매물/,
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText('128개')).toBeInTheDocument();
+    expect(screen.getByText('비교 표본 128건')).toBeInTheDocument();
   });
 
   it('서버 결과를 원화 형식으로 표시하고 초기자금 부족 경고를 우선한다', async () => {
@@ -134,11 +158,11 @@ describe('ResultsPage', () => {
                 status: 'sufficient',
               },
               annual_goal: {
-                annual_financial_target: 18_400_000,
+                annual_financial_target: 0,
                 expected_resources_after_one_year: 96_240_000,
-                annual_financial_surplus: 77_840_000,
-                annual_goal_achievement_rate: 523.04,
-                status: 'above_target',
+                annual_financial_surplus: 96_240_000,
+                annual_goal_achievement_rate: null,
+                status: 'target_met',
               },
               price_appropriateness: {
                 status: 'unavailable',
@@ -216,21 +240,26 @@ describe('ResultsPage', () => {
       />,
     );
 
-    expect(await screen.findAllByText('역삼 원룸')).toHaveLength(3);
+    expect(await screen.findAllByText('역삼 원룸')).toHaveLength(1);
     expect(screen.getAllByText('초기자금 부족').length).toBeGreaterThan(0);
-    expect(screen.getByText('목표 달성')).toBeInTheDocument();
+    expect(screen.getByText('목표 없음')).toBeInTheDocument();
+    expect(
+      screen.getByText('설정한 1년 재무목표가 없습니다.'),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0);
     expect(screen.queryByText('목표 초과')).not.toBeInTheDocument();
     expect(screen.getByText('8,600만 원')).toBeInTheDocument();
-    expect(screen.getByText('사용 가능 현금')).toBeInTheDocument();
+    expect(screen.getByText('활용 가능 총자금')).toBeInTheDocument();
     expect(screen.getByText('7,500만 원')).toBeInTheDocument();
-    expect(screen.getByText('월 수익')).toBeInTheDocument();
+    expect(screen.getByText('월 현금유입')).toBeInTheDocument();
     expect(screen.getByText('350만 원')).toBeInTheDocument();
-    expect(screen.getByText('필수 월 현금유출')).toBeInTheDocument();
-    expect(screen.getByText('243만 원')).toBeInTheDocument();
+    expect(screen.getByText('－ 필수 월 현금유출')).toBeInTheDocument();
+    expect(screen.getByText('-243만 원')).toBeInTheDocument();
     expect(screen.queryByText('월 주거·교통비')).not.toBeInTheDocument();
-    expect(screen.getByText('-1,100만 원')).toHaveClass(
-      'result-metric__value--negative',
-    );
+    expect(screen.getAllByText('-1,100만 원')).toHaveLength(2);
+    screen.getAllByText('-1,100만 원').forEach((value) => {
+      expect(value).toHaveClass('result-metric__value--negative');
+    });
     expect(screen.getByText('-2,100만 원')).toHaveClass(
       'result-metric__value--negative',
     );

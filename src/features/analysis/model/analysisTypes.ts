@@ -130,8 +130,11 @@ export interface AnalysisCandidateResult {
     status: InitialFundsStatus;
   };
   monthly_cash_flow: {
+    monthly_income?: number;
     monthly_housing_and_transport_cost: number;
     essential_monthly_outflow: number;
+    base_monthly_balance?: number;
+    target_monthly_savings?: number;
     actual_monthly_balance: number;
     monthly_budget_margin: number;
     status: MonthlyCashFlowStatus;
@@ -140,7 +143,7 @@ export interface AnalysisCandidateResult {
     annual_financial_target: number;
     expected_resources_after_one_year: number;
     annual_financial_surplus: number;
-    annual_goal_achievement_rate: number;
+    annual_goal_achievement_rate: number | null;
     status: AnnualGoalStatus;
   };
   price_appropriateness: {
@@ -152,6 +155,12 @@ export interface AnalysisCandidateResult {
     difference_rate_from_median: number | null;
     price_percentile: number | null;
     candidate_equivalent_monthly_cost: number | null;
+    comparison_criteria?: {
+      lookback_months: number;
+      district_name: string;
+      property_type: string;
+      area_tolerance_percent: number;
+    } | null;
     samples: PriceComparisonSample[];
     reason: string | null;
   };

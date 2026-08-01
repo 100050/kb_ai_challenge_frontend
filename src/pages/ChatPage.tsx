@@ -248,7 +248,9 @@ export function ChatPage({
       ['실제 월 잔여금', formatWon(candidate.monthly_cash_flow.actual_monthly_balance)],
       [
         '1년 목표 달성률',
-        `${candidate.annual_goal.annual_goal_achievement_rate.toLocaleString('ko-KR')}%`,
+        candidate.annual_goal.annual_goal_achievement_rate === null
+          ? '—'
+          : `${candidate.annual_goal.annual_goal_achievement_rate.toLocaleString('ko-KR')}%`,
       ],
     ];
   }, [candidate]);

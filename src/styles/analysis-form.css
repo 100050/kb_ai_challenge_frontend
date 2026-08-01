@@ -548,22 +548,23 @@ label[for="recoverable-deposit"] {
 
 .result-page {
   padding-bottom: 88px;
+  background: var(--color-white);
 }
 
 .result-page__inner {
   display: flex;
   flex-direction: column;
-  width: min(1180px, calc(100% - 64px));
+  width: min(1320px, calc(100% - 80px));
   margin: 0 auto;
   padding: 42px 0 48px;
 }
 
 .result-page__inner > .result-section-heading {
-  order: 1;
+  order: 2;
 }
 
 .result-page__inner > .result-tabs {
-  order: 2;
+  order: 1;
 }
 
 .result-page__inner > .price-analysis {
@@ -574,31 +575,27 @@ label[for="recoverable-deposit"] {
   order: 4;
   margin-top: 64px;
   padding-top: 48px;
-  border-top: 1px solid var(--color-neutral-200);
-}
-
-.result-property-memo {
-  order: 5;
-}
-
-.result-overview {
-  order: 6;
+  border-top: 1px solid var(--color-neutral-300);
 }
 
 .result-warning {
-  order: 7;
+  order: 5;
 }
 
 .result-card-grid {
-  order: 8;
+  order: 6;
+}
+
+.financial-analysis-disclaimer {
+  order: 7;
 }
 
 .result-notes {
-  order: 9;
+  order: 8;
 }
 
 .result-ai-analysis {
-  order: 10;
+  order: 9;
 }
 
 .result-section-heading {
@@ -618,7 +615,8 @@ label[for="recoverable-deposit"] {
 
 .result-section-heading h1 {
   margin: 0 0 9px;
-  font-size: 32px;
+  font-size: 34px;
+  font-weight: 800;
   letter-spacing: -0.035em;
 }
 
@@ -629,31 +627,33 @@ label[for="recoverable-deposit"] {
   line-height: 1.6;
 }
 
-.financial-analysis-heading .result-tabs,
-.result-ai-analysis .result-tabs {
-  margin-bottom: 20px;
-}
-
 .result-heading {
   margin-bottom: 24px;
 }
 
 .result-tabs {
+  position: sticky;
+  z-index: 6;
+  top: 0;
   margin-bottom: 20px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-neutral-200);
+  background: rgb(255 255 255 / 96%);
+  backdrop-filter: blur(8px);
 }
 
 .result-ai-analysis {
   margin-top: 64px;
   padding-top: 48px;
-  border-top: 1px solid var(--color-neutral-200);
+  border-top: 1px solid var(--color-neutral-300);
 }
 
 .ai-analysis-card {
-  padding: 26px;
+  padding: 28px;
   border: 1px solid var(--color-neutral-200);
   border-radius: var(--radius-medium);
   background: var(--color-white);
-  box-shadow: var(--shadow-card);
+  box-shadow: none;
 }
 
 .ai-analysis-card__heading {
@@ -733,76 +733,6 @@ label[for="recoverable-deposit"] {
   font-size: 12px;
 }
 
-.result-property-memo {
-  margin-bottom: 18px;
-  padding: 18px 20px;
-  border: 1px solid var(--color-neutral-200);
-  border-radius: var(--radius-medium);
-  background: var(--color-white);
-}
-
-.result-property-memo h2 {
-  margin: 0 0 8px;
-  color: var(--color-neutral-800);
-  font-size: 14px;
-}
-
-.result-property-memo p {
-  margin: 0;
-  color: var(--color-neutral-700);
-  font-size: 14px;
-  line-height: 1.65;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.result-overview {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 32px;
-  margin-bottom: 18px;
-  padding: 20px 24px;
-  border: 1px solid var(--color-brand-border);
-  border-radius: var(--radius-medium);
-  background: var(--color-brand-pale);
-}
-
-.result-overview > div {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.result-overview span {
-  color: var(--color-neutral-700);
-  font-size: 13px;
-}
-
-.result-overview p {
-  max-width: 460px;
-  margin: 0;
-  color: var(--color-neutral-700);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.result-priority {
-  font-size: 18px;
-}
-
-.result-priority--success {
-  color: var(--color-success);
-}
-
-.result-priority--warning {
-  color: var(--color-warning);
-}
-
-.result-priority--danger {
-  color: var(--color-danger);
-}
-
 .result-warning {
   margin-bottom: 18px;
   padding: 18px 22px;
@@ -825,16 +755,18 @@ label[for="recoverable-deposit"] {
 .result-card-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  gap: 20px;
 }
 
 .result-card {
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--color-neutral-200);
   border-top-width: 4px;
   border-radius: var(--radius-medium);
   background: var(--color-white);
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 7px 20px rgb(29 29 30 / 5%);
 }
 
 .result-card--success {
@@ -854,8 +786,7 @@ label[for="recoverable-deposit"] {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  padding: 22px;
-  border-bottom: 1px solid var(--color-neutral-200);
+  padding: 18px 20px 8px;
 }
 
 .result-card__header > div {
@@ -872,6 +803,30 @@ label[for="recoverable-deposit"] {
 .result-card__header h2 {
   margin: 0;
   font-size: 17px;
+}
+
+.result-card__featured {
+  display: grid;
+  min-height: 86px;
+  padding: 10px 22px 16px;
+  place-items: center;
+  border-bottom: 1px solid var(--color-neutral-200);
+  text-align: center;
+}
+
+.result-card__featured strong {
+  color: var(--color-success);
+  font-size: 26px;
+  letter-spacing: -0.03em;
+}
+
+.result-card__featured strong.result-metric__value--negative {
+  color: var(--color-danger);
+}
+
+.result-card__featured span {
+  color: var(--color-neutral-700);
+  font-size: 12px;
 }
 
 .result-status {
@@ -898,8 +853,84 @@ label[for="recoverable-deposit"] {
 }
 
 .result-card dl {
+  flex: 1;
   margin: 0;
   padding: 8px 22px;
+}
+
+.result-card__footer {
+  margin-top: auto;
+  padding: 0 12px 12px;
+}
+
+.financial-analysis-disclaimer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 11px 16px;
+  border: 1px solid var(--color-neutral-200);
+  border-radius: 8px;
+  color: var(--color-neutral-700);
+  background: var(--color-neutral-50);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.financial-analysis-disclaimer span {
+  flex: 0 0 auto;
+  color: var(--color-neutral-700);
+  font-size: 14px;
+}
+
+.result-card-summary {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.result-card-summary--success {
+  color: var(--color-success);
+  background: var(--color-success-light);
+}
+
+.result-card-summary--warning {
+  color: var(--color-warning);
+  background: var(--color-warning-light);
+}
+
+.result-card-summary--danger {
+  color: var(--color-danger);
+  background: var(--color-danger-light);
+}
+
+.cash-flow-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.cash-flow-summary--success {
+  color: var(--color-success);
+  background: var(--color-success-light);
+}
+
+.cash-flow-summary--warning {
+  color: var(--color-warning);
+  background: var(--color-warning-light);
+}
+
+.cash-flow-summary--danger {
+  color: var(--color-danger);
+  background: var(--color-danger-light);
 }
 
 .result-metric {
@@ -915,9 +946,21 @@ label[for="recoverable-deposit"] {
   border-bottom: 0;
 }
 
+.result-card--cash-flow .result-metric:nth-child(1),
+.result-card--cash-flow .result-metric:nth-child(3) {
+  padding-bottom: 8px;
+  border-bottom: 0;
+}
+
+.result-card--cash-flow .result-metric:nth-child(2),
+.result-card--cash-flow .result-metric:nth-child(4) {
+  padding-top: 8px;
+}
+
 .result-metric dt {
   color: var(--color-neutral-700);
   font-size: 12px;
+  white-space: nowrap;
 }
 
 .result-metric dd {
@@ -925,10 +968,45 @@ label[for="recoverable-deposit"] {
   font-size: 14px;
   font-weight: 700;
   text-align: right;
+  white-space: nowrap;
 }
 
 .result-metric dd.result-metric__value--negative {
   color: var(--color-danger);
+}
+
+.result-metric dd.result-metric__value--success,
+.semantic-value--success {
+  color: var(--color-success);
+}
+
+.result-metric dd.result-metric__value--warning {
+  color: var(--color-warning);
+}
+
+.result-metric dd.result-metric__value--danger,
+.semantic-value--danger {
+  color: var(--color-danger);
+}
+
+.metric-label-with-help {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.metric-label-with-help .help-tooltip__trigger {
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+}
+
+.metric-label-with-help .help-tooltip__content {
+  right: 0;
+  left: auto;
+  width: 280px;
+  text-align: left;
+  white-space: normal;
 }
 
 .result-notes {
@@ -945,7 +1023,7 @@ label[for="recoverable-deposit"] {
   border: 1px solid var(--color-neutral-200);
   border-radius: var(--radius-medium);
   background: var(--color-white);
-  box-shadow: var(--shadow-card);
+  box-shadow: none;
 }
 
 .price-analysis__header {
@@ -953,8 +1031,8 @@ label[for="recoverable-deposit"] {
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--color-neutral-200);
+  padding: 22px 28px 12px;
+  border-bottom: 0;
 }
 
 .price-analysis__header > div > span {
@@ -970,39 +1048,46 @@ label[for="recoverable-deposit"] {
 
 .price-analysis__metrics {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   margin: 0;
-  padding: 8px 24px;
+  padding: 0;
+  border-top: 1px solid var(--color-neutral-200);
 }
 
 .price-chart {
+  position: relative;
   margin: 0;
-  padding: 24px;
+  padding: 34px 64px 42px;
   border-bottom: 1px solid var(--color-neutral-200);
-  background: var(--color-neutral-50);
+  background: var(--color-white);
 }
 
-.price-chart figcaption {
-  margin-bottom: 18px;
-  color: var(--color-neutral-800);
-  font-size: 14px;
-  font-weight: 700;
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.price-chart__row {
-  display: grid;
-  grid-template-columns: 180px minmax(0, 1fr);
-  gap: 18px;
-  align-items: center;
-  margin-top: 14px;
+.price-chart__labels {
+  position: relative;
+  height: 62px;
+  margin: 0 16px;
 }
 
 .price-chart__label {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  position: absolute;
+  display: grid;
+  gap: 5px;
+  width: 150px;
+  transform: translateX(-50%);
   font-size: 12px;
+  text-align: center;
 }
 
 .price-chart__label span {
@@ -1010,42 +1095,67 @@ label[for="recoverable-deposit"] {
 }
 
 .price-chart__label strong {
+  font-size: 21px;
   white-space: nowrap;
 }
 
+.price-chart__difference {
+  width: fit-content;
+  margin: 0 auto 18px;
+  padding: 7px 12px;
+  border: 1px solid var(--color-danger);
+  border-radius: 6px;
+  color: var(--color-danger);
+  background: var(--color-white);
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .price-chart__track {
-  overflow: hidden;
-  height: 18px;
+  position: relative;
+  height: 5px;
+  margin: 0 16px;
   border-radius: 999px;
-  background:
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent calc(25% - 1px),
-      var(--color-neutral-300) 25%
-    ),
-    var(--color-neutral-200);
+  background: var(--color-neutral-300);
 }
 
-.price-chart__bar {
-  display: block;
+.price-chart__range {
+  position: absolute;
+  inset: 0;
+  width: 100%;
   height: 100%;
-  min-width: 3px;
-  border-radius: inherit;
-  transition: width 240ms ease;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-neutral-300), var(--color-brand-primary));
 }
 
-.price-chart__bar--median {
-  background: var(--color-neutral-500);
+.price-chart__marker {
+  position: absolute;
+  top: 50%;
+  width: 24px;
+  height: 24px;
+  border: 4px solid var(--color-neutral-700);
+  border-radius: 50%;
+  background: var(--color-white);
+  transform: translate(-50%, -50%);
 }
 
-.price-chart__bar--candidate {
+.price-chart__marker--candidate {
+  border-color: var(--color-brand-primary);
   background: var(--color-brand-primary);
+}
+
+.price-chart__scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  color: var(--color-neutral-700);
+  font-size: 11px;
 }
 
 .price-analysis__metrics .result-metric {
   display: block;
-  padding: 18px;
+  padding: 22px 24px;
+  text-align: center;
   border-right: 1px solid var(--color-neutral-200);
   border-bottom: 0;
 }
@@ -1054,10 +1164,84 @@ label[for="recoverable-deposit"] {
   border-right: 0;
 }
 
+.price-analysis__sample-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 28px;
+  border-top: 1px solid var(--color-neutral-200);
+}
+
+.price-analysis__sample-summary > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.price-analysis__sample-summary > div > span {
+  color: var(--color-neutral-700);
+  font-size: 18px;
+}
+
+.price-analysis__sample-summary strong {
+  flex: 0 0 auto;
+  font-size: 14px;
+}
+
+.price-analysis__sample-summary small {
+  overflow: hidden;
+  color: var(--color-neutral-700);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.price-analysis__criteria-button {
+  min-height: 34px;
+  padding: 7px 14px;
+  font-size: 11px;
+}
+
+.price-analysis__criteria {
+  padding: 0 28px 18px;
+  border-top: 1px solid var(--color-neutral-200);
+  background: var(--color-neutral-50);
+}
+
+.price-analysis__criteria dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+}
+
+.price-analysis__criteria .result-metric {
+  display: block;
+  padding: 16px;
+  border-right: 1px solid var(--color-neutral-200);
+  border-bottom: 0;
+}
+
+.price-analysis__criteria .result-metric:last-child {
+  border-right: 0;
+}
+
+.price-analysis__criteria .result-metric dd {
+  margin-top: 6px;
+  text-align: left;
+}
+
+.price-analysis__criteria > p {
+  margin: 16px 0 0;
+  color: var(--color-neutral-700);
+  font-size: 12px;
+}
+
 .price-analysis__metrics dd {
   margin-top: 9px;
-  font-size: 17px;
-  text-align: left;
+  font-size: 22px;
+  text-align: center;
 }
 
 .price-analysis__unavailable {
@@ -1631,6 +1815,23 @@ label[for="recoverable-deposit"] {
 }
 
 @media (max-width: 760px) {
+  .result-tabs {
+    top: 64px;
+  }
+  .price-analysis__sample-summary,
+  .price-analysis__sample-summary > div {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .price-analysis__sample-summary small {
+    white-space: normal;
+  }
+
+  .price-analysis__criteria dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .analysis-page {
     height: auto;
     min-height: 100vh;

@@ -9,7 +9,6 @@ import {
   getHousingPlan,
 } from '../features/analysis/api/analysisApi';
 import type {
-  AnalysisCandidateResult,
   AnalysisResult,
   AnnualGoalStatus,
   InitialFundsStatus,
@@ -69,6 +68,15 @@ const annualGoalStatus: Record<AnnualGoalStatus, StatusPresentation> = {
   above_target: { label: '목표 달성', tone: 'success' },
 };
 
+const propertyTypeLabels: Record<string, string> = {
+  apartment: '아파트',
+  row_house: '연립주택/다세대주택',
+  multi_family: '연립주택/다세대주택',
+  officetel: '오피스텔',
+  detached_house: '단독주택/다가구주택',
+  multi_household: '단독주택/다가구주택',
+};
+
 const previewResult: AnalysisResult = {
   analysis_id: 'preview',
   candidates: [
@@ -106,6 +114,12 @@ const previewResult: AnalysisResult = {
         difference_rate_from_median: 5.68,
         price_percentile: 72.2,
         candidate_equivalent_monthly_cost: null,
+        comparison_criteria: {
+          lookback_months: 12,
+          district_name: '강남구',
+          property_type: 'officetel',
+          area_tolerance_percent: 15,
+        },
         samples: [],
         reason: null,
       },
@@ -299,20 +313,6 @@ function formatSignedWon(value: number) {
   return `${value > 0 ? '+' : ''}${formatWon(value)}`;
 }
 
-function getPriority(candidate: AnalysisCandidateResult): StatusPresentation {
-  const initial = initialFundsStatus[candidate.initial_funds.status];
-  if (candidate.initial_funds.status !== 'sufficient') {
-    return initial;
-  }
-
-  const monthly = monthlyCashFlowStatus[candidate.monthly_cash_flow.status];
-  if (candidate.monthly_cash_flow.status !== 'sufficient') {
-    return monthly;
-  }
-
-  return annualGoalStatus[candidate.annual_goal.status];
-}
-
 interface PriceComparisonChartProps {
   candidateCost: number;
   medianCost: number;
@@ -322,39 +322,59 @@ function PriceComparisonChart({
   candidateCost,
   medianCost,
 }: PriceComparisonChartProps) {
-  const scaleMax = Math.max(candidateCost, medianCost, 1) * 1.12;
-  const medianWidth = `${(medianCost / scaleMax) * 100}%`;
-  const candidateWidth = `${(candidateCost / scaleMax) * 100}%`;
+  const maximum = Math.max(candidateCost, medianCost, 1);
+  const minimum = Math.min(candidateCost, medianCost);
+  const range = Math.max(maximum - minimum, maximum * 0.12, 1);
+  const scaleMin = Math.max(0, minimum - range * 0.65);
+  const scaleMax = maximum + range * 0.65;
+  const position = (value: number) =>
+    `${((value - scaleMin) / (scaleMax - scaleMin)) * 100}%`;
+  const difference = candidateCost - medianCost;
+  const differenceRate = medianCost === 0 ? 0 : (difference / medianCost) * 100;
 
   return (
     <figure
       aria-label={`비교군 중앙값 ${formatWon(medianCost)}, 현재 매물 ${formatWon(candidateCost)}`}
       className="price-chart"
     >
-      <figcaption>환산 월 임대비용 비교</figcaption>
-      <div className="price-chart__row">
-        <div className="price-chart__label">
+      <figcaption className="sr-only">환산 월 임대비용 비교</figcaption>
+      <div className="price-chart__labels">
+        <div
+          className="price-chart__label price-chart__label--median"
+          style={{ left: position(medianCost) }}
+        >
           <span>비교군 중앙값</span>
           <strong>{formatWon(medianCost)}</strong>
         </div>
-        <div className="price-chart__track">
-          <span
-            className="price-chart__bar price-chart__bar--median"
-            style={{ width: medianWidth }}
-          />
-        </div>
-      </div>
-      <div className="price-chart__row">
-        <div className="price-chart__label">
+        <div
+          className="price-chart__label price-chart__label--candidate"
+          style={{ left: position(candidateCost) }}
+        >
           <span>현재 매물</span>
           <strong>{formatWon(candidateCost)}</strong>
         </div>
-        <div className="price-chart__track">
-          <span
-            className="price-chart__bar price-chart__bar--candidate"
-            style={{ width: candidateWidth }}
-          />
-        </div>
+      </div>
+      <div className="price-chart__difference">
+        {formatSignedWon(difference)} · {differenceRate > 0 ? '+' : ''}
+        {differenceRate.toLocaleString('ko-KR', {
+          maximumFractionDigits: 1,
+        })}
+        %
+      </div>
+      <div className="price-chart__track">
+        <span className="price-chart__range" />
+        <span
+          className="price-chart__marker price-chart__marker--median"
+          style={{ left: position(medianCost) }}
+        />
+        <span
+          className="price-chart__marker price-chart__marker--candidate"
+          style={{ left: position(candidateCost) }}
+        />
+      </div>
+      <div className="price-chart__scale">
+        <span>낮음</span>
+        <span>높음</span>
       </div>
     </figure>
   );
@@ -539,15 +559,27 @@ function PriceSampleTable({
 
 interface MetricProps {
   isNegative?: boolean;
-  label: string;
+  label: React.ReactNode;
+  tone?: ResultTone;
   value: string;
 }
 
-function Metric({ isNegative = false, label, value }: MetricProps) {
+function Metric({ isNegative = false, label, tone, value }: MetricProps) {
+  const valueTone = tone ?? (isNegative ? 'danger' : undefined);
+
   return (
     <div className="result-metric">
       <dt>{label}</dt>
-      <dd className={isNegative ? 'result-metric__value--negative' : undefined}>
+      <dd
+        className={
+          [
+            valueTone ? `result-metric__value--${valueTone}` : '',
+            isNegative ? 'result-metric__value--negative' : '',
+          ]
+            .filter(Boolean)
+            .join(' ') || undefined
+        }
+      >
         {value}
       </dd>
     </div>
@@ -555,20 +587,32 @@ function Metric({ isNegative = false, label, value }: MetricProps) {
 }
 
 interface ResultCardProps {
+  className?: string;
   children: React.ReactNode;
+  featuredLabel: string;
+  featuredValue: string;
+  featuredValueIsNegative?: boolean;
+  footer?: React.ReactNode;
   icon: React.ReactNode;
   status: StatusPresentation;
   title: string;
 }
 
 function ResultCard({
+  className,
   children,
+  featuredLabel,
+  featuredValue,
+  featuredValueIsNegative = false,
+  footer,
   icon,
   status,
   title,
 }: ResultCardProps) {
   return (
-    <article className={`result-card result-card--${status.tone}`}>
+    <article
+      className={`result-card result-card--${status.tone}${className ? ` ${className}` : ''}`}
+    >
       <div className="result-card__header">
         <div>
           {icon}
@@ -578,7 +622,20 @@ function ResultCard({
           {status.label}
         </span>
       </div>
+      <div className="result-card__featured">
+        <strong
+          className={
+            featuredValueIsNegative
+              ? 'result-metric__value--negative'
+              : undefined
+          }
+        >
+          {featuredValue}
+        </strong>
+        <span>{featuredLabel}</span>
+      </div>
       <dl>{children}</dl>
+      {footer ? <div className="result-card__footer">{footer}</div> : null}
     </article>
   );
 }
@@ -622,6 +679,7 @@ export function ResultsPage({
   const [isLoading, setIsLoading] = useState(Boolean(analysisId));
   const [error, setError] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
+  const [showComparisonCriteria, setShowComparisonCriteria] = useState(false);
 
   useEffect(() => {
     if (!analysisId) {
@@ -693,7 +751,7 @@ export function ResultsPage({
     if (!priceResult || priceResult.status !== 'available') {
       return null;
     }
-    if (priceResult.sample_count >= 10) {
+    if (priceResult.sample_count >= 30) {
       return 'median';
     }
     if (priceResult.sample_count > 0) {
@@ -701,6 +759,40 @@ export function ResultsPage({
     }
     return priceResult.comparison_mode;
   }, [activeCandidate]);
+
+  const activeMonthlyIncome = activeCandidate
+    ? (activeCandidate.monthly_cash_flow.monthly_income ?? monthlyIncome)
+    : null;
+  const activeBaseMonthlyBalance = activeCandidate
+    ? (activeCandidate.monthly_cash_flow.base_monthly_balance ??
+      (activeMonthlyIncome ?? 0) -
+        activeCandidate.monthly_cash_flow.essential_monthly_outflow)
+    : 0;
+  const activeTargetMonthlySavings = activeCandidate
+    ? (activeCandidate.monthly_cash_flow.target_monthly_savings ??
+      activeBaseMonthlyBalance -
+        activeCandidate.monthly_cash_flow.actual_monthly_balance)
+    : 0;
+  const activeMonthlySafetyMargin = activeCandidate
+    ? activeCandidate.monthly_cash_flow.actual_monthly_balance -
+      activeCandidate.monthly_cash_flow.monthly_budget_margin
+    : 0;
+  const activeComparisonAreaRange = (() => {
+    if (!activeCandidate) {
+      return null;
+    }
+    const area = housingPlans[activeCandidate.property_id]?.exclusive_area_m2;
+    const tolerance =
+      activeCandidate.price_appropriateness.comparison_criteria
+        ?.area_tolerance_percent;
+    if (area === null || area === undefined || tolerance === undefined) {
+      return null;
+    }
+    const ratio = tolerance / 100;
+    const formatArea = (value: number) =>
+      value.toLocaleString('ko-KR', { maximumFractionDigits: 2 });
+    return `${formatArea(area * (1 - ratio))}㎡ ~ ${formatArea(area * (1 + ratio))}㎡ (±${tolerance}%)`;
+  })();
 
   const retryLoad = () => {
     setIsLoading(true);
@@ -710,10 +802,7 @@ export function ResultsPage({
 
   return (
     <div className="analysis-page">
-      <AnalysisHeader
-        onExit={onExit}
-        saveStatus={analysisId ? '분석 완료' : '결과 화면 미리보기'}
-      />
+      <AnalysisHeader onExit={onExit} />
       <div className="analysis-shell analysis-shell--full">
         <main className="analysis-content result-page">
           {isLoading ? (
@@ -731,12 +820,6 @@ export function ResultsPage({
             </div>
           ) : activeCandidate ? (
             <div className="result-page__inner">
-              <ResultSectionHeading
-                description="주변 유사 거래와 환산 월 임대비용을 같은 기준으로 비교합니다."
-                eyebrow="01 PRICE ANALYSIS"
-                title="가격 적정성 분석"
-              />
-
               <div
                 aria-label="가격 분석 매물 선택"
                 className="property-tabs result-tabs"
@@ -760,60 +843,19 @@ export function ResultsPage({
                 ))}
               </div>
 
+              <ResultSectionHeading
+                description="주변 유사 거래와 환산 월 임대비용을 같은 기준으로 비교합니다."
+                eyebrow="01 PRICE ANALYSIS"
+                title="가격 적정성 분석"
+              />
+
               <div className="financial-analysis-heading">
                 <ResultSectionHeading
                   description="입주 시점의 자금 상태부터 월 현금흐름과 1년 재무목표까지 확인합니다."
                   eyebrow="02 FINANCIAL ANALYSIS"
                   title="재무 적정성 분석"
                 />
-                <div
-                  aria-label="재무 분석 매물 선택"
-                  className="property-tabs result-tabs"
-                  role="tablist"
-                >
-                  {result?.candidates.map((candidate) => (
-                    <button
-                      aria-selected={candidate.property_id === activeId}
-                      className={
-                        candidate.property_id === activeId
-                          ? 'is-active'
-                          : undefined
-                      }
-                      key={candidate.property_id}
-                      onClick={() => setActiveId(candidate.property_id)}
-                      role="tab"
-                      type="button"
-                    >
-                      {candidate.name}
-                    </button>
-                  ))}
-                </div>
               </div>
-
-              {activeCandidate.memo ? (
-                <section
-                  aria-labelledby="result-property-memo-title"
-                  className="result-property-memo"
-                >
-                  <h2 id="result-property-memo-title">매물 메모</h2>
-                  <p>{activeCandidate.memo}</p>
-                </section>
-              ) : null}
-
-              <section className="result-overview">
-                <div>
-                  <span>현재 조건에서 가장 먼저 확인할 항목</span>
-                  <strong
-                    className={`result-priority result-priority--${getPriority(activeCandidate).tone}`}
-                  >
-                    {getPriority(activeCandidate).label}
-                  </strong>
-                </div>
-                <p>
-                  아래 결과는 추천이나 순위가 아니라 입력한 재무 기준에 따른
-                  계산 결과입니다.
-                </p>
-              </section>
 
               {activeCandidate.initial_funds.status ===
               'insufficient_initial_funds' ? (
@@ -828,6 +870,25 @@ export function ResultsPage({
 
               <div className="result-card-grid">
                 <ResultCard
+                  featuredLabel="입주 후 유동자산"
+                  featuredValue={formatWon(
+                    activeCandidate.initial_funds.post_move_liquid_assets,
+                  )}
+                  featuredValueIsNegative={
+                    activeCandidate.initial_funds.post_move_liquid_assets < 0
+                  }
+                  footer={
+                    <p
+                      className={`result-card-summary result-card-summary--${initialFundsStatus[activeCandidate.initial_funds.status].tone}`}
+                    >
+                      {activeCandidate.initial_funds.status === 'sufficient'
+                        ? '초기자금과 최소 비상자금을 모두 충족합니다.'
+                        : activeCandidate.initial_funds.status ===
+                            'insufficient_initial_funds'
+                          ? '계약에 필요한 초기자금이 부족합니다.'
+                          : '최소 비상자금 기준을 충족하지 못합니다.'}
+                    </p>
+                  }
                   icon={<WalletIcon />}
                   status={
                     initialFundsStatus[activeCandidate.initial_funds.status]
@@ -836,7 +897,7 @@ export function ResultsPage({
                 >
                   <Metric
                     isNegative={activeCandidate.initial_funds.available_cash < 0}
-                    label="사용 가능 현금"
+                    label="활용 가능 총자금"
                     value={formatWon(
                       activeCandidate.initial_funds.available_cash,
                     )}
@@ -865,6 +926,11 @@ export function ResultsPage({
                         ? '비상자금 대비 여유액'
                         : '비상자금 대비 부족액'
                     }
+                    tone={
+                      activeCandidate.initial_funds.emergency_fund_gap >= 0
+                        ? 'success'
+                        : 'danger'
+                    }
                     value={formatSignedWon(
                       activeCandidate.initial_funds.emergency_fund_gap,
                     )}
@@ -872,7 +938,38 @@ export function ResultsPage({
                 </ResultCard>
 
                 <ResultCard
+                  className="result-card--cash-flow"
+                  featuredLabel="실제 월 잔여금"
+                  featuredValue={formatSignedWon(
+                    activeCandidate.monthly_cash_flow.actual_monthly_balance,
+                  )}
+                  featuredValueIsNegative={
+                    activeCandidate.monthly_cash_flow.actual_monthly_balance < 0
+                  }
                   icon={<HomeIcon />}
+                  footer={
+                    <div
+                      className={`cash-flow-summary cash-flow-summary--${monthlyCashFlowStatus[activeCandidate.monthly_cash_flow.status].tone}`}
+                    >
+                      <span>
+                        안전여유 {formatWon(activeMonthlySafetyMargin)} 확보 후
+                      </span>
+                      <strong
+                        className={
+                          activeCandidate.monthly_cash_flow
+                            .monthly_budget_margin >= 0
+                            ? 'semantic-value--success'
+                            : 'semantic-value--danger'
+                        }
+                      >
+                        월 예산여유{' '}
+                        {formatSignedWon(
+                          activeCandidate.monthly_cash_flow
+                            .monthly_budget_margin,
+                        )}
+                      </strong>
+                    </div>
+                  }
                   status={
                     monthlyCashFlowStatus[
                       activeCandidate.monthly_cash_flow.status
@@ -881,17 +978,27 @@ export function ResultsPage({
                   title="월 현금흐름"
                 >
                   <Metric
-                    label="월 수익"
+                    label="월 현금유입"
                     value={
-                      monthlyIncome === null ? '—' : formatWon(monthlyIncome)
+                      activeMonthlyIncome === null
+                        ? '—'
+                        : formatWon(activeMonthlyIncome)
                     }
                   />
                   <Metric
-                    label="필수 월 현금유출"
+                    label="－ 필수 월 현금유출"
                     value={formatWon(
-                      activeCandidate.monthly_cash_flow
+                      -activeCandidate.monthly_cash_flow
                         .essential_monthly_outflow,
                     )}
+                  />
+                  <Metric
+                    label="기본 월 잔여금"
+                    value={formatWon(activeBaseMonthlyBalance)}
+                  />
+                  <Metric
+                    label="－ 목표저축액"
+                    value={formatWon(-activeTargetMonthlySavings)}
                   />
                   <Metric
                     isNegative={
@@ -899,25 +1006,49 @@ export function ResultsPage({
                       0
                     }
                     label="실제 월 잔여금"
+                    tone={
+                      activeCandidate.monthly_cash_flow
+                        .actual_monthly_balance >= 0
+                        ? 'success'
+                        : 'danger'
+                    }
                     value={formatSignedWon(
                       activeCandidate.monthly_cash_flow.actual_monthly_balance,
-                    )}
-                  />
-                  <Metric
-                    isNegative={
-                      activeCandidate.monthly_cash_flow.monthly_budget_margin < 0
-                    }
-                    label="월 예산여유액"
-                    value={formatSignedWon(
-                      activeCandidate.monthly_cash_flow.monthly_budget_margin,
                     )}
                   />
                 </ResultCard>
 
                 <ResultCard
+                  featuredLabel="목표 달성률"
+                  featuredValue={
+                    activeCandidate.annual_goal.annual_goal_achievement_rate ===
+                    null
+                      ? '—'
+                      : `${activeCandidate.annual_goal.annual_goal_achievement_rate.toLocaleString('ko-KR')}%`
+                  }
+                  featuredValueIsNegative={
+                    activeCandidate.annual_goal.annual_goal_achievement_rate !==
+                      null &&
+                    activeCandidate.annual_goal.annual_goal_achievement_rate < 100
+                  }
+                  footer={
+                    <p
+                      className={`result-card-summary result-card-summary--${activeCandidate.annual_goal.annual_goal_achievement_rate === null ? 'warning' : annualGoalStatus[activeCandidate.annual_goal.status].tone}`}
+                    >
+                      {activeCandidate.annual_goal
+                        .annual_goal_achievement_rate === null
+                        ? '설정한 1년 재무목표가 없습니다.'
+                        : activeCandidate.annual_goal.status === 'below_target'
+                          ? '현재 조건에서는 1년 재무목표 달성이 어렵습니다.'
+                          : '1년 재무목표를 달성하고도 여유가 예상됩니다.'}
+                    </p>
+                  }
                   icon={<TargetIcon />}
                   status={
-                    annualGoalStatus[activeCandidate.annual_goal.status]
+                    activeCandidate.annual_goal
+                      .annual_goal_achievement_rate === null
+                      ? { label: '목표 없음', tone: 'warning' }
+                      : annualGoalStatus[activeCandidate.annual_goal.status]
                   }
                   title="1년 재무목표"
                 >
@@ -947,6 +1078,11 @@ export function ResultsPage({
                         ? '목표 대비 여유액'
                         : '목표 대비 부족액'
                     }
+                    tone={
+                      activeCandidate.annual_goal.annual_financial_surplus >= 0
+                        ? 'success'
+                        : 'danger'
+                    }
                     value={formatSignedWon(
                       activeCandidate.annual_goal.annual_financial_surplus,
                     )}
@@ -954,13 +1090,36 @@ export function ResultsPage({
                   <Metric
                     isNegative={
                       activeCandidate.annual_goal
+                        .annual_goal_achievement_rate !== null &&
+                      activeCandidate.annual_goal
                         .annual_goal_achievement_rate < 0
                     }
                     label="재무목표 달성률"
-                    value={`${activeCandidate.annual_goal.annual_goal_achievement_rate.toLocaleString('ko-KR')}%`}
+                    tone={
+                      activeCandidate.annual_goal
+                        .annual_goal_achievement_rate === null
+                        ? undefined
+                        : activeCandidate.annual_goal
+                              .annual_goal_achievement_rate >= 100
+                          ? 'success'
+                          : 'warning'
+                    }
+                    value={
+                      activeCandidate.annual_goal
+                        .annual_goal_achievement_rate === null
+                        ? '—'
+                        : `${activeCandidate.annual_goal.annual_goal_achievement_rate.toLocaleString('ko-KR')}%`
+                    }
                   />
                 </ResultCard>
               </div>
+
+              <p className="financial-analysis-disclaimer">
+                <span aria-hidden="true">ⓘ</span>
+                분석 결과는 입력한 금액과 현재 조건이 유지된다는 가정에 따른
+                예상치이며, 소득 변화·예상치 못한 지출·투자손익은 반영하지
+                않습니다.
+              </p>
 
               <section className="price-analysis">
                 <div className="price-analysis__header">
@@ -1006,6 +1165,15 @@ export function ResultsPage({
                             .difference_from_median ?? 0) < 0
                         }
                         label="중앙값 대비 차액"
+                        tone={
+                          (activeCandidate.price_appropriateness
+                            .difference_from_median ?? 0) > 0
+                            ? 'danger'
+                            : (activeCandidate.price_appropriateness
+                                  .difference_from_median ?? 0) < 0
+                              ? 'success'
+                              : undefined
+                        }
                         value={formatSignedWon(
                           activeCandidate.price_appropriateness
                             .difference_from_median ?? 0,
@@ -1017,23 +1185,126 @@ export function ResultsPage({
                             .difference_rate_from_median ?? 0) < 0
                         }
                         label="중앙값 대비 차이율"
+                        tone={
+                          (activeCandidate.price_appropriateness
+                            .difference_rate_from_median ?? 0) > 0
+                            ? 'danger'
+                            : (activeCandidate.price_appropriateness
+                                  .difference_rate_from_median ?? 0) < 0
+                              ? 'success'
+                              : undefined
+                        }
                         value={`${(
+                          activeCandidate.price_appropriateness
+                            .difference_rate_from_median ?? 0
+                        ) > 0 ? '+' : ''}${(
                           activeCandidate.price_appropriateness
                             .difference_rate_from_median ?? 0
                         ).toLocaleString('ko-KR')}%`}
                       />
                       <Metric
-                        label="가격 백분위"
+                        label={
+                          <span className="metric-label-with-help">
+                            가격 백분위
+                            <span className="help-tooltip">
+                              <button
+                                aria-label="가격 백분위 설명"
+                                className="help-tooltip__trigger"
+                                type="button"
+                              >
+                                ?
+                              </button>
+                              <span
+                                className="help-tooltip__content"
+                                role="tooltip"
+                              >
+                                해당 거래보다 가격이 저렴한 비교 거래의 비율
+                              </span>
+                            </span>
+                          </span>
+                        }
                         value={`${(
                           activeCandidate.price_appropriateness
                             .price_percentile ?? 0
                         ).toLocaleString('ko-KR')}%`}
                       />
-                      <Metric
-                        label="비교 표본 수"
-                        value={`${activeCandidate.price_appropriateness.sample_count.toLocaleString('ko-KR')}개`}
-                      />
                     </dl>
+                    <div className="price-analysis__sample-summary">
+                      <div>
+                        <span aria-hidden="true">◉</span>
+                        <strong>
+                          비교 표본{' '}
+                          {activeCandidate.price_appropriateness.sample_count.toLocaleString(
+                            'ko-KR',
+                          )}
+                          건
+                        </strong>
+                        {activeCandidate.price_appropriateness
+                          .comparison_criteria ? (
+                          <small>
+                            최근{' '}
+                            {
+                              activeCandidate.price_appropriateness
+                                .comparison_criteria.lookback_months
+                            }
+                            개월 ·{' '}
+                            {
+                              activeCandidate.price_appropriateness
+                                .comparison_criteria.district_name
+                            }{' '}
+                            · 동일 주택유형 · 유사 면적
+                          </small>
+                        ) : null}
+                      </div>
+                      <button
+                        aria-expanded={showComparisonCriteria}
+                        className="button button--secondary price-analysis__criteria-button"
+                        onClick={() =>
+                          setShowComparisonCriteria((isVisible) => !isVisible)
+                        }
+                        type="button"
+                      >
+                        비교 기준 보기
+                      </button>
+                    </div>
+                    {showComparisonCriteria ? (
+                      <div className="price-analysis__criteria">
+                        {activeCandidate.price_appropriateness
+                          .comparison_criteria ? (
+                          <dl>
+                            <Metric
+                              label="거래 기간"
+                              value={`최근 ${activeCandidate.price_appropriateness.comparison_criteria.lookback_months}개월`}
+                            />
+                            <Metric
+                              label="지역"
+                              value={
+                                activeCandidate.price_appropriateness
+                                  .comparison_criteria.district_name
+                              }
+                            />
+                            <Metric
+                              label="주택유형"
+                              value={
+                                propertyTypeLabels[
+                                  activeCandidate.price_appropriateness
+                                    .comparison_criteria.property_type
+                                ] ?? '기타 주택'
+                              }
+                            />
+                            <Metric
+                              label="면적 허용범위"
+                              value={
+                                activeComparisonAreaRange ??
+                                `±${activeCandidate.price_appropriateness.comparison_criteria.area_tolerance_percent}%`
+                              }
+                            />
+                          </dl>
+                        ) : (
+                          <p>현재 결과에는 세부 비교 기준이 없습니다.</p>
+                        )}
+                      </div>
+                    ) : null}
                   </>
                 ) : activeCandidate.price_appropriateness.status ===
                     'available' &&
@@ -1078,28 +1349,6 @@ export function ResultsPage({
                   eyebrow="03 AI ANALYSIS"
                   title="AI 종합 해설"
                 />
-                <div
-                  aria-label="AI 해설 매물 선택"
-                  className="property-tabs result-tabs"
-                  role="tablist"
-                >
-                  {result?.candidates.map((candidate) => (
-                    <button
-                      aria-selected={candidate.property_id === activeId}
-                      className={
-                        candidate.property_id === activeId
-                          ? 'is-active'
-                          : undefined
-                      }
-                      key={candidate.property_id}
-                      onClick={() => setActiveId(candidate.property_id)}
-                      role="tab"
-                      type="button"
-                    >
-                      {candidate.name}
-                    </button>
-                  ))}
-                </div>
                 <div className="ai-analysis-card">
                   <div className="ai-analysis-card__heading">
                     <span aria-hidden="true">✦</span>
@@ -1116,17 +1365,20 @@ export function ResultsPage({
                     {formatSignedWon(
                       activeCandidate.monthly_cash_flow.actual_monthly_balance,
                     )}
-                    이며, 1년 재무목표 달성률은{' '}
-                    {activeCandidate.annual_goal.annual_goal_achievement_rate.toLocaleString(
-                      'ko-KR',
-                    )}
-                    %입니다.
+                    이며,{' '}
+                    {activeCandidate.annual_goal
+                      .annual_goal_achievement_rate === null
+                      ? '설정한 1년 재무목표는 없습니다.'
+                      : `1년 재무목표 달성률은 ${activeCandidate.annual_goal.annual_goal_achievement_rate.toLocaleString('ko-KR')}%입니다.`}
                   </p>
                   <div className="ai-analysis-points">
                     <article className="ai-analysis-point ai-analysis-point--success">
                       <h3>장점</h3>
                       <strong>
-                        {activeCandidate.annual_goal.status !== 'below_target'
+                        {activeCandidate.annual_goal
+                          .annual_goal_achievement_rate === null
+                          ? '월 현금흐름 확인 가능'
+                          : activeCandidate.annual_goal.status !== 'below_target'
                           ? '1년 재무목표 달성 가능'
                           : activeCandidate.monthly_cash_flow
                                 .actual_monthly_balance >= 0
