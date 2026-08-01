@@ -156,7 +156,10 @@ export interface AnalysisCandidateResult {
     reason: string | null;
   };
   calculation_details: unknown;
-  warnings: string[];
+  warnings: Array<{
+    code: string;
+    message: string;
+  }>;
 }
 
 export interface AnalysisResult {

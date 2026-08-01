@@ -144,7 +144,13 @@ describe('ResultsPage', () => {
                 reason: '비교 필드가 없습니다.',
               },
               calculation_details: {},
-              warnings: ['초기자금이 부족합니다.'],
+              warnings: [
+                {
+                  code: 'INSUFFICIENT_INITIAL_FUNDS',
+                  message:
+                    '초기자금이 부족하여 이후 계산은 계약 체결을 가정한 참고값입니다.',
+                },
+              ],
             },
           ],
           generated_at: '2026-07-24T03:31:00Z',
@@ -221,6 +227,11 @@ describe('ResultsPage', () => {
     );
     expect(
       screen.getByText(/계약이 체결된다는 가정으로 계산한 참고값/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        '초기자금이 부족하여 이후 계산은 계약 체결을 가정한 참고값입니다.',
+      ),
     ).toBeInTheDocument();
     expect(
       screen.getByText('가격 비교 결과를 제공할 수 없습니다.'),

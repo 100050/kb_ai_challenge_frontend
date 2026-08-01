@@ -1017,7 +1017,7 @@ export function ResultsPage({
                   <h2>계산 유의사항</h2>
                   <ul>
                     {activeCandidate.warnings.map((warning) => (
-                      <li key={warning}>{warning}</li>
+                      <li key={warning.code}>{warning.message}</li>
                     ))}
                   </ul>
                 </div>
