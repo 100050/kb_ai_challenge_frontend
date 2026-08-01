@@ -18,6 +18,9 @@ describe('ResultsPage', () => {
       screen.getByRole('heading', { name: '매물별 분석 결과를 확인하세요' }),
     ).toBeInTheDocument();
     expect(
+      screen.queryByRole('complementary', { name: '분석 입력 단계' }),
+    ).not.toBeInTheDocument();
+    expect(
       screen.getByRole('heading', { name: '초기자금 및 유동성' }),
     ).toBeInTheDocument();
     expect(

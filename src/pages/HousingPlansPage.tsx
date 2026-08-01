@@ -235,6 +235,7 @@ export function HousingPlansPage({
   const [activeId, setActiveId] = useState(plans[0].propertyId);
   const [isLoading, setIsLoading] = useState(Boolean(analysisId));
   const [isSaving, setIsSaving] = useState(false);
+  const [isEvaluating, setIsEvaluating] = useState(false);
   const [error, setError] = useState('');
   const [saveMessage, setSaveMessage] = useState('');
 
@@ -394,6 +395,7 @@ export function HousingPlansPage({
     }
 
     setIsSaving(true);
+    setIsEvaluating(Boolean(analysisId));
     setError('');
     try {
       if (analysisId) {
@@ -412,6 +414,7 @@ export function HousingPlansPage({
       }
       onNext();
     } catch (saveError) {
+      setIsEvaluating(false);
       setError(
         saveError instanceof ApiError
           ? saveError.message
@@ -466,20 +469,35 @@ export function HousingPlansPage({
       <AnalysisHeader
         onExit={onExit}
         saveStatus={
-          isSaving
-            ? '저장 중...'
+          isEvaluating
+            ? '분석 중...'
+            : isSaving
+              ? '저장 중...'
             : analysisId
               ? undefined
               : '입력 화면 미리보기'
         }
       />
-      <div className="analysis-shell">
-        <StepSidebar currentStep={3} progress={100} />
+      <div
+        className={`analysis-shell${isEvaluating ? ' analysis-shell--full' : ''}`}
+      >
+        {isEvaluating ? null : (
+          <StepSidebar currentStep={3} progress={100} />
+        )}
         <main className="analysis-content">
           {isLoading ? (
             <div className="page-state" role="status">
               <span className="loading-spinner" />
               후보 매물을 불러오는 중입니다.
+            </div>
+          ) : isEvaluating ? (
+            <div className="page-state evaluation-loading" role="status">
+              <span className="loading-spinner" />
+              <strong>분석 결과를 만드는 중입니다.</strong>
+              <p>
+                입력한 매물의 재무 적합성과 가격 적정성을 분석하고
+                있어요.
+              </p>
             </div>
           ) : (
             <form

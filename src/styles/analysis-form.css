@@ -50,6 +50,10 @@
   min-height: 0;
 }
 
+.analysis-shell.analysis-shell--full {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .step-sidebar {
   min-height: 0;
   overflow-y: auto;
@@ -520,6 +524,26 @@ label[for="recoverable-deposit"] {
   border-radius: var(--radius-medium);
   color: var(--color-neutral-500);
   background: var(--color-white);
+}
+
+.evaluation-loading {
+  gap: 10px;
+  min-height: calc(100vh - 160px);
+  text-align: center;
+}
+
+.evaluation-loading strong {
+  margin-top: 4px;
+  color: var(--color-neutral-900);
+  font-size: 19px;
+}
+
+.evaluation-loading p {
+  max-width: 420px;
+  margin: 0;
+  color: var(--color-neutral-700);
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .result-page {
@@ -1318,6 +1342,10 @@ label[for="recoverable-deposit"] {
   padding: 14px 36px;
   border-top: 1px solid var(--color-neutral-200);
   background: rgb(255 255 255 / 96%);
+}
+
+.form-navigation.result-navigation {
+  left: 0;
 }
 
 .form-navigation > div {

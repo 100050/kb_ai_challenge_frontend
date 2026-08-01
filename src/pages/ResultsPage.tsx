@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { ApiError } from '../api/httpClient';
 import { AnalysisHeader } from '../components/layout/AnalysisHeader';
-import { StepSidebar } from '../components/layout/StepSidebar';
 import { HomeIcon, TargetIcon, WalletIcon } from '../components/ui/Icons';
 import {
   getAnalysis,
@@ -697,8 +696,7 @@ export function ResultsPage({
         onExit={onExit}
         saveStatus={analysisId ? '분석 완료' : '결과 화면 미리보기'}
       />
-      <div className="analysis-shell">
-        <StepSidebar currentStep={4} progress={100} />
+      <div className="analysis-shell analysis-shell--full">
         <main className="analysis-content result-page">
           {isLoading ? (
             <div className="page-state" role="status">

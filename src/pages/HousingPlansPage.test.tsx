@@ -238,6 +238,14 @@ describe('HousingPlansPage', () => {
     await user.click(
       screen.getByRole('button', { name: /분석하기/ }),
     );
+    expect(screen.getByRole('status')).toHaveTextContent(
+      '분석 결과를 만드는 중입니다.',
+    );
+    expect(
+      screen.queryByRole('complementary', { name: '분석 입력 단계' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText('분석 중...')).toBeInTheDocument();
+    expect(screen.queryByText('저장 중...')).not.toBeInTheDocument();
     await waitFor(() => {
       expect(requestBody?.loan_plan).toEqual({
         deposit_loan_amount: 0,
