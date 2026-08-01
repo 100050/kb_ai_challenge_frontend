@@ -292,7 +292,7 @@ export function FinancialGoalsPage({
         }
       />
       <div className="analysis-shell">
-        <StepSidebar currentStep={2} progress={67} />
+        <StepSidebar currentStep={2} />
         <main className="analysis-content">
           {isLoading ? (
             <div className="page-state" role="status">

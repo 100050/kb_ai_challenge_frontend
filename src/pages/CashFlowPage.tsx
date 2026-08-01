@@ -219,7 +219,7 @@ export function CashFlowPage({
         }
       />
       <div className="analysis-shell">
-        <StepSidebar currentStep={1} progress={33} />
+        <StepSidebar currentStep={1} />
         <main className="analysis-content">
           {isLoading ? (
             <div className="page-state" role="status">

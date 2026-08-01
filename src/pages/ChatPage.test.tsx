@@ -108,7 +108,6 @@ describe('ChatPage', () => {
       <ChatPage
         analysisId={analysisId}
         onBack={() => undefined}
-        onRestart={() => undefined}
       />,
     );
 
@@ -119,7 +118,15 @@ describe('ChatPage', () => {
     expect(screen.getByRole('list')).toBeInTheDocument();
     expect(screen.getByText('안정적입니다.').tagName).toBe('STRONG');
     expect(screen.getAllByText('수정동 원룸')).toHaveLength(2);
-    expect(screen.getByText('부산시 동구 수정동')).toBeInTheDocument();
+    expect(screen.getByText(/부산시 동구 수정동 · 20㎡/)).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: '가격 적정성' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: '재무 분석' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('350%')).toBeInTheDocument();
+    expect(screen.queryByText('🤖')).not.toBeInTheDocument();
   });
 
   it('사용자 메시지를 보내고 SSE 답변을 증분 표시한다', async () => {
@@ -149,7 +156,6 @@ describe('ChatPage', () => {
       <ChatPage
         analysisId={analysisId}
         onBack={() => undefined}
-        onRestart={() => undefined}
       />,
     );
 

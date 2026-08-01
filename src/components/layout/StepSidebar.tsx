@@ -6,26 +6,29 @@ const steps = [
 
 interface StepSidebarProps {
   currentStep: number;
-  progress: number;
 }
 
-export function StepSidebar({ currentStep, progress }: StepSidebarProps) {
+export function StepSidebar({ currentStep }: StepSidebarProps) {
+  const totalSteps = steps.length;
+  const progressWidth = `${(currentStep / totalSteps) * 100}%`;
+
   return (
     <aside className="step-sidebar" aria-label="분석 입력 단계">
       <div className="step-sidebar__progress">
         <div>
           <span>입력 진행률</span>
-          <strong>{progress}%</strong>
+          <strong>{currentStep}/{totalSteps}</strong>
         </div>
         <div
-          aria-label={`입력 진행률 ${progress}%`}
-          aria-valuemax={100}
-          aria-valuemin={0}
-          aria-valuenow={progress}
+          aria-label={`입력 진행률 ${currentStep}/${totalSteps}`}
+          aria-valuemax={totalSteps}
+          aria-valuemin={1}
+          aria-valuenow={currentStep}
+          aria-valuetext={`${currentStep}/${totalSteps}`}
           className="progress-track"
           role="progressbar"
         >
-          <span style={{ width: `${progress}%` }} />
+          <span style={{ width: progressWidth }} />
         </div>
       </div>
       <ol className="analysis-steps">

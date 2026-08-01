@@ -86,6 +86,7 @@ const previewResult: AnalysisResult = {
       memo: '역세권, 엘리베이터 있음',
       initial_funds: {
         available_cash: 95_000_000,
+        available_own_funds: 95_000_000,
         initial_cash_required: 11_600_000,
         post_move_liquid_assets: 83_400_000,
         emergency_fund_gap: 73_400_000,
@@ -132,6 +133,7 @@ const previewResult: AnalysisResult = {
       memo: null,
       initial_funds: {
         available_cash: 95_000_000,
+        available_own_funds: 95_000_000,
         initial_cash_required: 88_000_000,
         post_move_liquid_assets: 7_000_000,
         emergency_fund_gap: -3_000_000,
@@ -172,6 +174,7 @@ const previewResult: AnalysisResult = {
       memo: '채광 좋음',
       initial_funds: {
         available_cash: 95_000_000,
+        available_own_funds: 95_000_000,
         initial_cash_required: 25_000_000,
         post_move_liquid_assets: 70_000_000,
         emergency_fund_gap: 60_000_000,
@@ -411,6 +414,7 @@ function PriceSampleTable({
   property,
   samples,
 }: PriceSampleTableProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [sortKey, setSortKey] =
     useState<SampleSortKey>('equivalent_monthly_cost');
   const [direction, setDirection] = useState<SortDirection>('ascending');
@@ -486,7 +490,18 @@ function PriceSampleTable({
         <strong>{property.name ?? '이름 없는 매물'}</strong>
         <p>{property.address ?? '주소 미입력'}</p>
       </div>
-      <table className="sample-table">
+      <button
+        aria-expanded={isExpanded}
+        className="sample-table__toggle"
+        onClick={() => setIsExpanded((expanded) => !expanded)}
+        type="button"
+      >
+        {isExpanded
+          ? '표본 접기'
+          : `비교 표본 ${samples.length.toLocaleString('ko-KR')}건 펼쳐보기`}
+        <span aria-hidden="true">{isExpanded ? '⌃' : '⌄'}</span>
+      </button>
+      {isExpanded ? <table className="sample-table">
         <caption>
           전체 실거래 표본 {samples.length}개
         </caption>
@@ -552,7 +567,7 @@ function PriceSampleTable({
             </tr>
           ))}
         </tbody>
-      </table>
+      </table> : null}
     </div>
   );
 }
@@ -763,6 +778,10 @@ export function ResultsPage({
   const activeMonthlyIncome = activeCandidate
     ? (activeCandidate.monthly_cash_flow.monthly_income ?? monthlyIncome)
     : null;
+  const activeAvailableOwnFunds = activeCandidate
+    ? (activeCandidate.initial_funds.available_own_funds ??
+      activeCandidate.initial_funds.available_cash)
+    : 0;
   const activeBaseMonthlyBalance = activeCandidate
     ? (activeCandidate.monthly_cash_flow.base_monthly_balance ??
       (activeMonthlyIncome ?? 0) -
@@ -896,11 +915,9 @@ export function ResultsPage({
                   title="초기자금 및 유동성"
                 >
                   <Metric
-                    isNegative={activeCandidate.initial_funds.available_cash < 0}
+                    isNegative={activeAvailableOwnFunds < 0}
                     label="활용 가능 총자금"
-                    value={formatWon(
-                      activeCandidate.initial_funds.available_cash,
-                    )}
+                    value={formatWon(activeAvailableOwnFunds)}
                   />
                   <Metric
                     label="초기 필요자금"

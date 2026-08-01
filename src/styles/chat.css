@@ -48,7 +48,7 @@
 
 .chat-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr) 340px;
   height: 100vh;
   padding-top: 64px;
 }
@@ -135,12 +135,8 @@
 }
 
 .chat-main__heading > div > span {
-  display: grid;
-  width: 40px;
-  height: 40px;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--color-neutral-100);
+  color: var(--color-brand-strong);
+  font-size: 26px;
 }
 
 .chat-main__heading h1 {
@@ -172,12 +168,8 @@
 }
 
 .chat-welcome > span {
-  display: grid;
-  width: 38px;
-  height: 38px;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--color-neutral-100);
+  color: var(--color-brand-strong);
+  font-size: 24px;
 }
 
 .chat-welcome > div {
@@ -207,7 +199,7 @@
 }
 
 .chat-message__bubble {
-  max-width: min(680px, 82%);
+  max-width: min(920px, 94%);
   padding: 13px 16px;
   border: 1px solid var(--color-neutral-200);
   border-radius: 5px 15px 15px;
@@ -356,12 +348,6 @@
   border-left: 1px solid var(--color-neutral-200);
 }
 
-.chat-summary > section {
-  padding: 15px;
-  border: 1px solid var(--color-neutral-200);
-  border-radius: 10px;
-}
-
 .chat-property-tabs {
   display: flex;
   gap: 6px;
@@ -388,45 +374,56 @@
   font-weight: 700;
 }
 
-.chat-summary > section span,
-.chat-summary > section strong,
-.chat-summary > section p {
+.chat-summary__property {
+  padding: 14px 0 18px;
+  border-bottom: 1px solid var(--color-neutral-200);
+}
+
+.chat-summary__property strong,
+.chat-summary__property p {
   display: block;
 }
 
-.chat-summary > section span {
-  color: var(--color-neutral-500);
-  font-size: 11px;
+.chat-summary__property strong {
+  font-size: 15px;
 }
 
-.chat-summary > section strong {
-  margin-top: 6px;
-}
-
-.chat-summary > section p {
+.chat-summary__property p {
   margin: 5px 0 0;
   color: var(--color-neutral-700);
   font-size: 12px;
 }
 
-.chat-summary dl {
-  margin: 20px 0;
+.chat-summary__metrics {
+  padding: 20px 0 6px;
 }
 
-.chat-summary dl > div {
+.chat-summary__metrics + .chat-summary__metrics {
+  border-top: 1px solid var(--color-neutral-200);
+}
+
+.chat-summary__metrics h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+
+.chat-summary__metrics dl {
+  margin: 0;
+}
+
+.chat-summary__metrics dl > div {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  padding: 11px 0;
-  border-bottom: 1px solid var(--color-neutral-200);
+  padding: 7px 0;
 }
 
-.chat-summary dt {
+.chat-summary__metrics dt {
   color: var(--color-neutral-700);
   font-size: 12px;
 }
 
-.chat-summary dd {
+.chat-summary__metrics dd {
   margin: 0;
   font-size: 12px;
   font-weight: 700;

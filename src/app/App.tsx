@@ -135,7 +135,6 @@ export function App() {
       <ChatPage
         analysisId={analysisId}
         onBack={() => navigate(`/analyses/${analysisId}/results`)}
-        onRestart={() => navigate(`/analyses/${analysisId}/housing-plans`)}
       />
     );
   }

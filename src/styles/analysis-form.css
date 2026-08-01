@@ -1301,6 +1301,32 @@ label[for="recoverable-deposit"] {
   font-size: 12px;
 }
 
+.sample-table__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--color-neutral-300);
+  border-radius: var(--radius-small);
+  color: var(--color-neutral-800);
+  background: var(--color-white);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sample-table__toggle:hover {
+  border-color: var(--color-brand-primary);
+  background: var(--color-brand-pale);
+}
+
+.sample-table__toggle span {
+  color: var(--color-brand-strong);
+  font-size: 17px;
+}
+
 .sample-table {
   width: 100%;
   min-width: 1040px;

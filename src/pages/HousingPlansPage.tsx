@@ -482,7 +482,7 @@ export function HousingPlansPage({
         className={`analysis-shell${isEvaluating ? ' analysis-shell--full' : ''}`}
       >
         {isEvaluating ? null : (
-          <StepSidebar currentStep={3} progress={100} />
+          <StepSidebar currentStep={3} />
         )}
         <main className="analysis-content">
           {isLoading ? (

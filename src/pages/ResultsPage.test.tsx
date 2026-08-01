@@ -88,12 +88,21 @@ describe('ResultsPage', () => {
     await user.click(within(priceTabs).getByRole('tab', { name: '매물 3' }));
 
     expect(screen.getByText(/매물 메모: 채광 좋음/)).toBeInTheDocument();
+    expect(
+      screen.queryByRole('table', { name: '전체 실거래 표본 3개' }),
+    ).not.toBeInTheDocument();
+    await user.click(
+      screen.getByRole('button', { name: '비교 표본 3건 펼쳐보기' }),
+    );
 
     const table = screen.getByRole('table', {
       name: '전체 실거래 표본 3개',
     });
     expect(screen.getAllByText('부산시 동구 수정동')).toHaveLength(2);
     expect(within(table).getAllByRole('row')).toHaveLength(5);
+    expect(
+      screen.getByRole('button', { name: '표본 접기' }),
+    ).toHaveAttribute('aria-expanded', 'true');
     expect(within(table).getByText('내 매물')).toBeInTheDocument();
     expect(within(table).getByText('매물 3')).toBeInTheDocument();
     expect(within(table).getByText('수정 아파트 A')).toBeInTheDocument();
@@ -145,6 +154,7 @@ describe('ResultsPage', () => {
               name: '역삼 원룸',
               initial_funds: {
                 available_cash: 75_000_000,
+                available_own_funds: 20_000_000,
                 initial_cash_required: 86_000_000,
                 post_move_liquid_assets: -11_000_000,
                 emergency_fund_gap: -21_000_000,
@@ -250,7 +260,7 @@ describe('ResultsPage', () => {
     expect(screen.queryByText('목표 초과')).not.toBeInTheDocument();
     expect(screen.getByText('8,600만 원')).toBeInTheDocument();
     expect(screen.getByText('활용 가능 총자금')).toBeInTheDocument();
-    expect(screen.getByText('7,500만 원')).toBeInTheDocument();
+    expect(screen.getByText('2,000만 원')).toBeInTheDocument();
     expect(screen.getByText('월 현금유입')).toBeInTheDocument();
     expect(screen.getByText('350만 원')).toBeInTheDocument();
     expect(screen.getByText('－ 필수 월 현금유출')).toBeInTheDocument();

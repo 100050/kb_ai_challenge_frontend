@@ -26,7 +26,7 @@ describe('FinancialGoalsPage', () => {
     expect(screen.getByText('1. 소득·생활비')).toBeInTheDocument();
     expect(screen.getByText('2. 자산·재무목표')).toBeInTheDocument();
     expect(
-      screen.getByRole('progressbar', { name: '입력 진행률 67%' }),
+      screen.getByRole('progressbar', { name: '입력 진행률 2/3' }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: '월 목표저축액 설명' }),

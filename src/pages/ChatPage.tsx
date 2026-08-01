@@ -28,7 +28,6 @@ import {
 interface ChatPageProps {
   analysisId: string;
   onBack: () => void;
-  onRestart: () => void;
 }
 
 interface ViewMessage {
@@ -43,6 +42,20 @@ function formatWon(value: number) {
   })}만 원`;
 }
 
+function formatSignedWon(value: number) {
+  if (value === 0) {
+    return '0만 원';
+  }
+  return `${value > 0 ? '+' : ''}${formatWon(value)}`;
+}
+
+function formatSignedPercent(value: number | null) {
+  if (value === null) {
+    return '—';
+  }
+  return `${value > 0 ? '+' : ''}${value.toLocaleString('ko-KR')}%`;
+}
+
 function messageError(error: unknown) {
   return error instanceof ApiError
     ? error.message
@@ -52,7 +65,6 @@ function messageError(error: unknown) {
 export function ChatPage({
   analysisId,
   onBack,
-  onRestart,
 }: ChatPageProps) {
   const [messages, setMessages] = useState<ViewMessage[]>([]);
   const [input, setInput] = useState('');
@@ -238,23 +250,6 @@ export function ChatPage({
   );
   const property = properties[activePropertyId] ?? null;
 
-  const selectedSummary = useMemo(() => {
-    if (!candidate) {
-      return [];
-    }
-    return [
-      ['초기 필요자금', formatWon(candidate.initial_funds.initial_cash_required)],
-      ['입주 후 유동자산', formatWon(candidate.initial_funds.post_move_liquid_assets)],
-      ['실제 월 잔여금', formatWon(candidate.monthly_cash_flow.actual_monthly_balance)],
-      [
-        '1년 목표 달성률',
-        candidate.annual_goal.annual_goal_achievement_rate === null
-          ? '—'
-          : `${candidate.annual_goal.annual_goal_achievement_rate.toLocaleString('ko-KR')}%`,
-      ],
-    ];
-  }, [candidate]);
-
   return (
     <div className="chat-page">
       <header className="chat-header">
@@ -263,7 +258,6 @@ export function ChatPage({
         </a>
         <div>
           <button onClick={onBack} type="button">← 분석 결과로 돌아가기</button>
-          <button onClick={onRestart} type="button">분석 다시하기</button>
         </div>
       </header>
 
@@ -271,7 +265,7 @@ export function ChatPage({
         <main className="chat-main">
           <div className="chat-main__heading">
             <div>
-              <span aria-hidden="true">🤖</span>
+              <span aria-hidden="true">✦</span>
               <div>
                 <h1>AI 상담 챗봇</h1>
                 <p>분석 결과와 주거·금융에 대해 무엇이든 질문해 보세요.</p>
@@ -285,7 +279,7 @@ export function ChatPage({
               <div className="chat-state" role="status">대화를 불러오는 중입니다.</div>
             ) : messages.length === 0 ? (
               <div className="chat-welcome">
-                <span aria-hidden="true">🤖</span>
+                <span aria-hidden="true">✦</span>
                 <div>
                   <strong>안녕하세요! 가늠입니다.</strong>
                   <p>분석 결과나 주거, 대출, 재무관리에 대해 궁금한 점을 자유롭게 질문해 주세요.</p>
@@ -375,19 +369,82 @@ export function ChatPage({
               </button>
             ))}
           </div>
-          <section>
-            <span>선택 매물</span>
+          <section className="chat-summary__property">
             <strong>{property?.name ?? candidate?.name ?? '불러오는 중'}</strong>
-            <p>{property?.address ?? '주소 정보 없음'}</p>
+            <p>
+              {property?.address ?? '주소 정보 없음'}
+              {property?.exclusive_area_m2 !== null &&
+              property?.exclusive_area_m2 !== undefined
+                ? ` · ${property.exclusive_area_m2.toLocaleString('ko-KR')}㎡`
+                : ''}
+            </p>
           </section>
-          <dl>
-            {selectedSummary.map(([label, value]) => (
-              <div key={label}>
-                <dt>{label}</dt>
-                <dd>{value}</dd>
+          <section className="chat-summary__metrics">
+            <h3>가격 적정성</h3>
+            <dl>
+              <div>
+                <dt>중앙값 대비 차이율</dt>
+                <dd>
+                  {formatSignedPercent(
+                    candidate?.price_appropriateness
+                      .difference_rate_from_median ?? null,
+                  )}
+                </dd>
               </div>
-            ))}
-          </dl>
+              <div>
+                <dt>가격 백분위</dt>
+                <dd>
+                  {candidate?.price_appropriateness.price_percentile === null ||
+                  candidate?.price_appropriateness.price_percentile ===
+                    undefined
+                    ? '—'
+                    : `${candidate.price_appropriateness.price_percentile.toLocaleString('ko-KR')}백분위`}
+                </dd>
+              </div>
+            </dl>
+          </section>
+          <section className="chat-summary__metrics">
+            <h3>재무 분석</h3>
+            <dl>
+              <div>
+                <dt>초기 필요자금</dt>
+                <dd>
+                  {candidate
+                    ? formatWon(candidate.initial_funds.initial_cash_required)
+                    : '—'}
+                </dd>
+              </div>
+              <div>
+                <dt>입주 후 유동자산</dt>
+                <dd>
+                  {candidate
+                    ? formatWon(candidate.initial_funds.post_move_liquid_assets)
+                    : '—'}
+                </dd>
+              </div>
+              <div>
+                <dt>실제 월 잔여금</dt>
+                <dd>
+                  {candidate
+                    ? formatSignedWon(
+                        candidate.monthly_cash_flow.actual_monthly_balance,
+                      )
+                    : '—'}
+                </dd>
+              </div>
+              <div>
+                <dt>1년 목표 달성률</dt>
+                <dd>
+                  {candidate?.annual_goal.annual_goal_achievement_rate ===
+                    null ||
+                  candidate?.annual_goal.annual_goal_achievement_rate ===
+                    undefined
+                    ? '—'
+                    : `${candidate.annual_goal.annual_goal_achievement_rate.toLocaleString('ko-KR')}%`}
+                </dd>
+              </div>
+            </dl>
+          </section>
         </aside>
       </div>
     </div>

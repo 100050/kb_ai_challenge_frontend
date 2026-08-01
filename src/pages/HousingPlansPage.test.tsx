@@ -26,7 +26,7 @@ describe('HousingPlansPage', () => {
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('progressbar', { name: '입력 진행률 100%' }),
+      screen.getByRole('progressbar', { name: '입력 진행률 3/3' }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText('매물 이름')).toBeInTheDocument();
     expect(screen.getByLabelText('매물 메모 (선택)')).toBeInTheDocument();

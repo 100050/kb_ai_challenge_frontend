@@ -124,6 +124,7 @@ export interface AnalysisCandidateResult {
   memo: string | null;
   initial_funds: {
     available_cash: number;
+    available_own_funds?: number;
     initial_cash_required: number;
     post_move_liquid_assets: number;
     emergency_fund_gap: number;
