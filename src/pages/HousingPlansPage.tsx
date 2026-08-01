@@ -323,21 +323,23 @@ export function HousingPlansPage({
     }
   };
 
-  const removePlan = async () => {
-    if (!activePlan || plans.length === 1) {
+  const removePlan = async (targetPlan: HousingFormValues) => {
+    if (plans.length === 1) {
       setError('최소 한 개의 후보 매물이 필요합니다.');
       return;
     }
 
     try {
       if (analysisId) {
-        await deleteHousingPlan(analysisId, activePlan.propertyId);
+        await deleteHousingPlan(analysisId, targetPlan.propertyId);
       }
       const remaining = plans.filter(
-        (plan) => plan.propertyId !== activePlan.propertyId,
+        (plan) => plan.propertyId !== targetPlan.propertyId,
       );
       setPlans(remaining);
-      setActiveId(remaining[0]?.propertyId ?? '');
+      if (targetPlan.propertyId === activeId) {
+        setActiveId(remaining[0]?.propertyId ?? '');
+      }
     } catch {
       setError('후보 매물을 삭제하지 못했습니다.');
     }
@@ -504,18 +506,30 @@ export function HousingPlansPage({
 
                 <div className="property-tabs" role="tablist">
                   {plans.map((plan, index) => (
-                    <button
-                      aria-selected={plan.propertyId === activeId}
-                      className={
-                        plan.propertyId === activeId ? 'is-active' : undefined
-                      }
-                      key={plan.propertyId}
-                      onClick={() => setActiveId(plan.propertyId)}
-                      role="tab"
-                      type="button"
-                    >
-                      {plan.name || `매물 ${index + 1}`}
-                    </button>
+                    <div className="property-tab" key={plan.propertyId}>
+                      <button
+                        aria-selected={plan.propertyId === activeId}
+                        className={
+                          plan.propertyId === activeId
+                            ? 'property-tab__select is-active'
+                            : 'property-tab__select'
+                        }
+                        onClick={() => setActiveId(plan.propertyId)}
+                        role="tab"
+                        type="button"
+                      >
+                        {plan.name || `매물 ${index + 1}`}
+                      </button>
+                      <button
+                        aria-label={`${plan.name || `매물 ${index + 1}`} 삭제`}
+                        className="property-tab__delete"
+                        disabled={plans.length === 1}
+                        onClick={() => removePlan(plan)}
+                        type="button"
+                      >
+                        ×
+                      </button>
+                    </div>
                   ))}
                 </div>
 
@@ -527,13 +541,6 @@ export function HousingPlansPage({
                           <HomeIcon />
                           <h2>매물 기본정보</h2>
                         </div>
-                        <button
-                          className="delete-property-button"
-                          onClick={removePlan}
-                          type="button"
-                        >
-                          현재 매물 삭제
-                        </button>
                       </div>
                       <div className="housing-field-grid">
                         <TextField
@@ -629,11 +636,21 @@ export function HousingPlansPage({
                     </section>
 
                     <section className="form-card housing-section">
-                      <h2>주거비와 교통비</h2>
+                      <h2>매물 세부정보</h2>
+                      {activePlan.housingType === 'jeonse' ? (
+                        <p className="housing-type-guide">
+                          전세 계약은 전체 전세금을 ‘전세보증금’에 입력해
+                          주세요. 월세는 0원으로 처리됩니다.
+                        </p>
+                      ) : null}
                       <div className="housing-cost-grid">
                         <CurrencyInput
                           id="deposit"
-                          label="보증금"
+                          label={
+                            activePlan.housingType === 'jeonse'
+                              ? '전세보증금'
+                              : '보증금'
+                          }
                           onChange={(value) => updateActive('deposit', value)}
                           value={activePlan.deposit}
                         />
@@ -672,6 +689,23 @@ export function HousingPlansPage({
                           }
                           value={activePlan.transportationCost}
                         />
+                      </div>
+                      <div className="form-field housing-memo-field housing-detail-memo">
+                        <label htmlFor="property-memo">매물 메모 (선택)</label>
+                        <textarea
+                          className="text-input housing-memo-input"
+                          id="property-memo"
+                          maxLength={2000}
+                          onChange={(event) =>
+                            updateActive('memo', event.target.value)
+                          }
+                          placeholder="예: 역세권, 엘리베이터 있음, 채광 좋음"
+                          rows={4}
+                          value={activePlan.memo}
+                        />
+                        <span className="housing-memo-count">
+                          {activePlan.memo.length.toLocaleString('ko-KR')} / 2,000자
+                        </span>
                       </div>
                     </section>
 
@@ -758,26 +792,6 @@ export function HousingPlansPage({
                         </div>
                       </section>
                     </div>
-                    <section className="form-card housing-section housing-extra-info">
-                      <h2>매물 기타 정보</h2>
-                      <div className="form-field housing-memo-field">
-                        <label htmlFor="property-memo">매물 메모 (선택)</label>
-                        <textarea
-                          className="text-input housing-memo-input"
-                          id="property-memo"
-                          maxLength={2000}
-                          onChange={(event) =>
-                            updateActive('memo', event.target.value)
-                          }
-                          placeholder="예: 역세권, 엘리베이터 있음, 채광 좋음"
-                          rows={4}
-                          value={activePlan.memo}
-                        />
-                        <span className="housing-memo-count">
-                          {activePlan.memo.length.toLocaleString('ko-KR')} / 2,000자
-                        </span>
-                      </div>
-                    </section>
                   </div>
                 ) : (
                   <div className="empty-properties">
@@ -811,9 +825,6 @@ export function HousingPlansPage({
                   <strong>
                     {initialRequiredFunds.toLocaleString('ko-KR')}만 원
                   </strong>
-                </div>
-                <div className="summary-tip">
-                  매물마다 대출과 추가비용을 별도로 저장합니다.
                 </div>
               </aside>
 
@@ -849,7 +860,7 @@ export function HousingPlansPage({
                     disabled={isSaving}
                     type="submit"
                   >
-                    {isSaving ? '저장 중...' : '저장하고 분석 준비'}
+                    {isSaving ? '저장 중...' : '분석하기'}
                     <ArrowRightIcon />
                   </button>
                 </div>

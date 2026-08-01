@@ -40,7 +40,8 @@ describe('CashFlowPage', () => {
     );
 
     expect(await screen.findByLabelText('세후 월 소득')).toHaveValue('350');
-    expect(screen.getByLabelText('월 비주거교통생활비')).toHaveValue('130');
+    expect(screen.getByLabelText('월 생활비(주거·교통 제외)')).toHaveValue('130');
+    expect(screen.queryByText('월 비 주거·교통 생활비')).not.toBeInTheDocument();
     expect(screen.getByLabelText('기존 대출 월 상환액')).toHaveValue('20');
   });
 
@@ -74,7 +75,7 @@ describe('CashFlowPage', () => {
     );
 
     expect(await screen.findByLabelText('세후 월 소득')).toHaveValue('350');
-    expect(screen.getByLabelText('월 비주거교통생활비')).toHaveValue('');
+    expect(screen.getByLabelText('월 생활비(주거·교통 제외)')).toHaveValue('');
     expect(screen.getByLabelText('기존 대출 월 상환액')).toHaveValue('');
   });
 
@@ -120,9 +121,9 @@ describe('CashFlowPage', () => {
     );
 
     await user.type(await screen.findByLabelText('세후 월 소득'), '350');
-    await user.type(screen.getByLabelText('월 비주거교통생활비'), '130');
+    await user.type(screen.getByLabelText('월 생활비(주거·교통 제외)'), '130');
     await user.type(screen.getByLabelText('기존 대출 월 상환액'), '20');
-    await user.click(screen.getByRole('button', { name: '저장하고 다음' }));
+    await user.click(screen.getByRole('button', { name: '다음 단계' }));
 
     await waitFor(() => {
       expect(requestBody).toEqual({
@@ -162,7 +163,7 @@ describe('CashFlowPage', () => {
     );
 
     await screen.findByLabelText('세후 월 소득');
-    await user.click(screen.getByRole('button', { name: '저장하고 다음' }));
+    await user.click(screen.getByRole('button', { name: '다음 단계' }));
 
     expect(screen.getAllByText('금액을 입력해 주세요.')).toHaveLength(3);
   });

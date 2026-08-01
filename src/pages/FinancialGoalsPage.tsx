@@ -336,7 +336,7 @@ export function FinancialGoalsPage({
                         autoFocus
                         error={errors.availableCash}
                         id="available-cash"
-                        label="사용 가능한 현금성 자산"
+                        label="사용 가능 현금"
                         onChange={(value) =>
                           updateValue('availableCash', value)
                         }
@@ -346,7 +346,7 @@ export function FinancialGoalsPage({
                       <CurrencyInput
                         error={errors.recoverableDeposit}
                         id="recoverable-deposit"
-                        label="반환받을 기존 임차보증금"
+                        label="기존 임차보증금 반환액"
                         onChange={(value) =>
                           updateValue('recoverableDeposit', value)
                         }
@@ -402,7 +402,7 @@ export function FinancialGoalsPage({
                         description="예기치 않은 월 지출에 대비하기 위한 예산상 완충 기준"
                         error={errors.monthlySafetyMargin}
                         id="monthly-safety-margin"
-                        label="월 안전여유액"
+                        label="월 안전여유"
                         onChange={(value) =>
                           updateValue('monthlySafetyMargin', value)
                         }
@@ -429,11 +429,11 @@ export function FinancialGoalsPage({
                 <h2>입력 현황</h2>
                 <dl>
                   <div>
-                    <dt>사용 가능한 현금</dt>
+                    <dt>사용 가능 현금</dt>
                     <dd>{formatManwon(values.availableCash)}</dd>
                   </div>
                   <div>
-                    <dt>반환 예정 보증금</dt>
+                    <dt>기존 임차보증금 반환액</dt>
                     <dd>{formatManwon(values.recoverableDeposit)}</dd>
                   </div>
                   <div>
@@ -441,7 +441,7 @@ export function FinancialGoalsPage({
                     <dd>{formatManwon(values.targetMonthlySavings)}</dd>
                   </div>
                   <div>
-                    <dt>월 안전여유액</dt>
+                    <dt>월 안전여유</dt>
                     <dd>{formatManwon(values.monthlySafetyMargin)}</dd>
                   </div>
                   <div>
@@ -491,7 +491,7 @@ export function FinancialGoalsPage({
                     disabled={isSaving}
                     type="submit"
                   >
-                    {isSaving ? '저장 중...' : '저장하고 다음'}
+                    {isSaving ? '저장 중...' : '다음 단계'}
                     <ArrowRightIcon />
                   </button>
                 </div>

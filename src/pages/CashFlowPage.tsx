@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 
 import { ApiError } from '../api/httpClient';
 import { AnalysisHeader } from '../components/layout/AnalysisHeader';
@@ -146,14 +146,6 @@ export function CashFlowPage({
     setReloadKey((key) => key + 1);
   };
 
-  const totalMonthlyOutflow = useMemo(() => {
-    if (!values.livingExpenses || !values.existingLoanPayment) {
-      return null;
-    }
-
-    return Number(values.livingExpenses) + Number(values.existingLoanPayment);
-  }, [values.existingLoanPayment, values.livingExpenses]);
-
   const updateValue = (key: keyof CashFlowFormValues, value: string) => {
     setValues((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: undefined }));
@@ -279,7 +271,7 @@ export function CashFlowPage({
                     <CurrencyInput
                       error={errors.livingExpenses}
                       id="living-expenses"
-                      label="월 비주거교통생활비"
+                      label="월 생활비(주거·교통 제외)"
                       onChange={(value) => updateValue('livingExpenses', value)}
                       placeholder="예: 130"
                       value={values.livingExpenses}
@@ -314,7 +306,7 @@ export function CashFlowPage({
                     <dd>{formatManwon(values.income)}</dd>
                   </div>
                   <div>
-                    <dt>월 비주거교통생활비</dt>
+                    <dt>월 생활비(주거·교통 제외)</dt>
                     <dd>{formatManwon(values.livingExpenses)}</dd>
                   </div>
                   <div>
@@ -322,14 +314,6 @@ export function CashFlowPage({
                     <dd>{formatManwon(values.existingLoanPayment)}</dd>
                   </div>
                 </dl>
-                <div className="summary-total">
-                  <span>월 비주거교통생활비</span>
-                  <strong>
-                    {totalMonthlyOutflow === null
-                      ? '계산 대기'
-                      : `${totalMonthlyOutflow.toLocaleString('ko-KR')}만 원`}
-                  </strong>
-                </div>
               </aside>
 
               <footer className="form-navigation">
@@ -364,7 +348,7 @@ export function CashFlowPage({
                     disabled={isSaving}
                     type="submit"
                   >
-                    {isSaving ? '저장 중...' : '저장하고 다음'}
+                    {isSaving ? '저장 중...' : '다음 단계'}
                     <ArrowRightIcon />
                   </button>
                 </div>

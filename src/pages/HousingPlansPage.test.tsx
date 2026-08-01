@@ -37,6 +37,19 @@ describe('HousingPlansPage', () => {
     expect(screen.getByLabelText('보증금 대출 예정액')).toBeInTheDocument();
     expect(screen.getByLabelText('중개보수')).toBeInTheDocument();
     expect(screen.queryByLabelText('법정동 코드')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: '매물 기본정보' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: '매물 세부정보' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: '보증금 대출' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: '초기 입주비용' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: '매물 기타 정보' })).not.toBeInTheDocument();
   });
 
   it('주택 유형을 4개의 결합 항목으로 표시한다', () => {
@@ -97,6 +110,27 @@ describe('HousingPlansPage', () => {
     expect(interestRate).toBeEnabled();
   });
 
+  it('전세를 선택하면 전세보증금 입력 방법을 안내한다', async () => {
+    const user = userEvent.setup();
+    render(
+      <HousingPlansPage
+        onExit={() => undefined}
+        onNext={() => undefined}
+        onPrevious={() => undefined}
+      />,
+    );
+
+    await user.selectOptions(screen.getByLabelText('계약 유형'), 'jeonse');
+
+    expect(screen.getByLabelText('전세보증금')).toBeInTheDocument();
+    expect(screen.getByLabelText('월세')).toBeDisabled();
+    expect(
+      screen.getByText(
+        '전세 계약은 전체 전세금을 ‘전세보증금’에 입력해 주세요. 월세는 0원으로 처리됩니다.',
+      ),
+    ).toBeInTheDocument();
+  });
+
   it('독립 화면에서 후보 매물을 추가하고 삭제한다', async () => {
     const user = userEvent.setup();
 
@@ -113,7 +147,7 @@ describe('HousingPlansPage', () => {
     );
     expect(screen.getByRole('tab', { name: '매물 2' })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: '현재 매물 삭제' }));
+    await user.click(screen.getByRole('button', { name: '매물 2 삭제' }));
     expect(
       screen.queryByRole('tab', { name: '매물 2' }),
     ).not.toBeInTheDocument();
@@ -202,7 +236,7 @@ describe('HousingPlansPage', () => {
     expect(screen.getByRole('checkbox', { name: '대출 이용' })).not.toBeChecked();
 
     await user.click(
-      screen.getByRole('button', { name: /저장하고 분석 준비/ }),
+      screen.getByRole('button', { name: /분석하기/ }),
     );
     await waitFor(() => {
       expect(requestBody?.loan_plan).toEqual({

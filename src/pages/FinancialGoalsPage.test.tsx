@@ -37,7 +37,7 @@ describe('FinancialGoalsPage', () => {
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: '월 안전여유액 설명' }),
+      screen.getByRole('button', { name: '월 안전여유 설명' }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('checkbox', {
@@ -82,14 +82,14 @@ describe('FinancialGoalsPage', () => {
       />,
     );
 
-    expect(await screen.findByLabelText('사용 가능한 현금성 자산')).toHaveValue(
+    expect(await screen.findByLabelText('사용 가능 현금')).toHaveValue(
       '7,500',
     );
-    expect(screen.getByLabelText('반환받을 기존 임차보증금')).toHaveValue(
+    expect(screen.getByLabelText('기존 임차보증금 반환액')).toHaveValue(
       '2,000',
     );
     expect(screen.getByLabelText('월 목표저축액')).toHaveValue('70');
-    expect(screen.getByLabelText('월 안전여유액')).toHaveValue('30');
+    expect(screen.getByLabelText('월 안전여유')).toHaveValue('30');
     expect(screen.getByLabelText('최소 비상자금')).toHaveValue('1,000');
     expect(
       screen.getByRole('checkbox', {
@@ -141,14 +141,14 @@ describe('FinancialGoalsPage', () => {
     );
 
     await user.type(
-      await screen.findByLabelText('사용 가능한 현금성 자산'),
+      await screen.findByLabelText('사용 가능 현금'),
       '7500',
     );
-    await user.type(screen.getByLabelText('반환받을 기존 임차보증금'), '2000');
+    await user.type(screen.getByLabelText('기존 임차보증금 반환액'), '2000');
     await user.type(screen.getByLabelText('월 목표저축액'), '70');
-    await user.type(screen.getByLabelText('월 안전여유액'), '30');
+    await user.type(screen.getByLabelText('월 안전여유'), '30');
     await user.type(screen.getByLabelText('최소 비상자금'), '1000');
-    await user.click(screen.getByRole('button', { name: '저장하고 다음' }));
+    await user.click(screen.getByRole('button', { name: '다음 단계' }));
 
     await waitFor(() => {
       expect(requestBody).toEqual({
@@ -172,7 +172,7 @@ describe('FinancialGoalsPage', () => {
         onPrevious={() => undefined}
       />,
     );
-    await user.click(screen.getByRole('button', { name: '저장하고 다음' }));
+    await user.click(screen.getByRole('button', { name: '다음 단계' }));
 
     expect(screen.getAllByText('금액을 입력해 주세요.')).toHaveLength(5);
   });

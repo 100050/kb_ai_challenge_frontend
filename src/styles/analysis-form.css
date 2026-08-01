@@ -185,7 +185,8 @@
   margin-bottom: 26px;
 }
 
-.page-heading > span {
+.page-heading > span,
+.page-heading > div > span {
   display: inline-block;
   margin-bottom: 10px;
   padding: 6px 12px;
@@ -324,9 +325,14 @@ label[for="recoverable-deposit"] {
   padding-bottom: 2px;
 }
 
-.property-tabs button {
+.property-tab {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.property-tabs > button,
+.property-tab__select {
   min-width: 108px;
-  padding: 12px 16px;
   border: 1px solid var(--color-neutral-300);
   border-radius: 9px;
   color: var(--color-neutral-700);
@@ -334,18 +340,58 @@ label[for="recoverable-deposit"] {
   font-weight: 600;
 }
 
-.property-tabs button.is-active {
+.property-tabs > button {
+  padding: 12px 16px;
+}
+
+.property-tab__select {
+  padding: 12px 38px 12px 16px;
+}
+
+.property-tabs > button.is-active,
+.property-tab__select.is-active {
   border-color: var(--color-brand-primary);
   color: var(--color-neutral-900);
   background: var(--color-brand-pale);
   box-shadow: inset 0 -3px var(--color-brand-primary);
 }
 
-.property-tabs button small {
+.property-tabs > button small,
+.property-tab__select small {
   display: block;
   margin-top: 3px;
   color: var(--color-warning);
   font-size: 10px;
+}
+
+.property-tab__delete {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  place-items: center;
+  color: var(--color-neutral-500);
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.property-tab__delete:hover:not(:disabled),
+.property-tab__delete:focus-visible {
+  color: var(--color-danger);
+  background: var(--color-danger-light);
+}
+
+.property-tab__delete:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
 }
 
 .housing-sections {
@@ -431,9 +477,24 @@ label[for="recoverable-deposit"] {
   text-align: right;
 }
 
+.housing-detail-memo {
+  margin-top: 24px;
+}
+
 .housing-cost-grid {
   margin-top: 24px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.housing-type-guide {
+  margin: 16px 0 -8px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-brand-border);
+  border-radius: var(--radius-small);
+  color: var(--color-neutral-700);
+  background: var(--color-brand-pale);
+  font-size: 12px;
+  line-height: 1.55;
 }
 
 .housing-cost-grid .form-field:last-child {
