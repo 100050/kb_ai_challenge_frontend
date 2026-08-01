@@ -15,7 +15,13 @@ describe('ResultsPage', () => {
     render(<ResultsPage onExit={() => undefined} onPrevious={() => undefined} />);
 
     expect(
-      screen.getByRole('heading', { name: '매물별 분석 결과를 확인하세요' }),
+      screen.getByRole('heading', { name: '가격 적정성 분석' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: '재무 적정성 분석' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'AI 종합 해설' }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('complementary', { name: '분석 입력 단계' }),
@@ -41,7 +47,10 @@ describe('ResultsPage', () => {
     expect(screen.getByText('128개')).toBeInTheDocument();
     expect(screen.getByText('역세권, 엘리베이터 있음')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('tab', { name: '매물 2' }));
+    const priceTabs = screen.getByRole('tablist', {
+      name: '가격 분석 매물 선택',
+    });
+    await user.click(within(priceTabs).getByRole('tab', { name: '매물 2' }));
 
     expect(screen.queryByText('매물 메모')).not.toBeInTheDocument();
     expect(
@@ -52,7 +61,7 @@ describe('ResultsPage', () => {
     ).not.toBeInTheDocument();
     expect(screen.getByText(/비교 표본 수: 0개/)).toBeInTheDocument();
 
-    await user.click(screen.getByRole('tab', { name: '매물 3' }));
+    await user.click(within(priceTabs).getByRole('tab', { name: '매물 3' }));
 
     expect(screen.getByText('채광 좋음')).toBeInTheDocument();
 
@@ -92,7 +101,7 @@ describe('ResultsPage', () => {
       '수정 빌라 B',
     );
 
-    await user.click(screen.getByRole('tab', { name: '매물 1' }));
+    await user.click(within(priceTabs).getByRole('tab', { name: '매물 1' }));
     expect(
       screen.getByRole('figure', {
         name: /비교군 중앙값.*현재 매물/,
@@ -207,7 +216,7 @@ describe('ResultsPage', () => {
       />,
     );
 
-    expect(await screen.findByText('역삼 원룸')).toBeInTheDocument();
+    expect(await screen.findAllByText('역삼 원룸')).toHaveLength(3);
     expect(screen.getAllByText('초기자금 부족').length).toBeGreaterThan(0);
     expect(screen.getByText('목표 달성')).toBeInTheDocument();
     expect(screen.queryByText('목표 초과')).not.toBeInTheDocument();

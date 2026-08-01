@@ -551,9 +551,87 @@ label[for="recoverable-deposit"] {
 }
 
 .result-page__inner {
+  display: flex;
+  flex-direction: column;
   width: min(1180px, calc(100% - 64px));
   margin: 0 auto;
   padding: 42px 0 48px;
+}
+
+.result-page__inner > .result-section-heading {
+  order: 1;
+}
+
+.result-page__inner > .result-tabs {
+  order: 2;
+}
+
+.result-page__inner > .price-analysis {
+  order: 3;
+}
+
+.financial-analysis-heading {
+  order: 4;
+  margin-top: 64px;
+  padding-top: 48px;
+  border-top: 1px solid var(--color-neutral-200);
+}
+
+.result-property-memo {
+  order: 5;
+}
+
+.result-overview {
+  order: 6;
+}
+
+.result-warning {
+  order: 7;
+}
+
+.result-card-grid {
+  order: 8;
+}
+
+.result-notes {
+  order: 9;
+}
+
+.result-ai-analysis {
+  order: 10;
+}
+
+.result-section-heading {
+  margin-bottom: 22px;
+}
+
+.result-section-heading > span {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: var(--color-neutral-900);
+  background: var(--color-brand-light);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.result-section-heading h1 {
+  margin: 0 0 9px;
+  font-size: 32px;
+  letter-spacing: -0.035em;
+}
+
+.result-section-heading p {
+  margin: 0;
+  color: var(--color-neutral-700);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.financial-analysis-heading .result-tabs,
+.result-ai-analysis .result-tabs {
+  margin-bottom: 20px;
 }
 
 .result-heading {
@@ -562,6 +640,97 @@ label[for="recoverable-deposit"] {
 
 .result-tabs {
   margin-bottom: 20px;
+}
+
+.result-ai-analysis {
+  margin-top: 64px;
+  padding-top: 48px;
+  border-top: 1px solid var(--color-neutral-200);
+}
+
+.ai-analysis-card {
+  padding: 26px;
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-medium);
+  background: var(--color-white);
+  box-shadow: var(--shadow-card);
+}
+
+.ai-analysis-card__heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ai-analysis-card__heading > span {
+  color: var(--color-brand-strong);
+  font-size: 24px;
+}
+
+.ai-analysis-card__heading h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.ai-analysis-card > p {
+  margin: 18px 0;
+  color: var(--color-neutral-800);
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.ai-analysis-points {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.ai-analysis-point {
+  padding: 18px;
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-small);
+  background: var(--color-neutral-50);
+}
+
+.ai-analysis-point--success {
+  border-color: rgb(26 160 83 / 25%);
+  background: var(--color-success-light);
+}
+
+.ai-analysis-point--danger {
+  border-color: rgb(234 90 89 / 25%);
+  background: var(--color-danger-light);
+}
+
+.ai-analysis-point--warning {
+  border-color: var(--color-brand-border);
+  background: var(--color-brand-pale);
+}
+
+.ai-analysis-point h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+
+.ai-analysis-point strong {
+  display: block;
+  font-size: 14px;
+}
+
+.ai-analysis-point p {
+  margin: 7px 0 0;
+  color: var(--color-neutral-700);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.ai-analysis-card p.ai-analysis-disclaimer {
+  margin-bottom: 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  color: var(--color-neutral-700);
+  background: var(--color-neutral-100);
+  font-size: 12px;
 }
 
 .result-property-memo {
@@ -1441,6 +1610,10 @@ label[for="recoverable-deposit"] {
   }
 
   .result-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-analysis-points {
     grid-template-columns: 1fr;
   }
 

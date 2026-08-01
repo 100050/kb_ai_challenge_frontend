@@ -583,6 +583,24 @@ function ResultCard({
   );
 }
 
+function ResultSectionHeading({
+  eyebrow,
+  title,
+  description,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="result-section-heading">
+      <span>{eyebrow}</span>
+      <h1>{title}</h1>
+      <p>{description}</p>
+    </div>
+  );
+}
+
 export function ResultsPage({
   analysisId,
   onChat,
@@ -713,16 +731,17 @@ export function ResultsPage({
             </div>
           ) : activeCandidate ? (
             <div className="result-page__inner">
-              <div className="page-heading result-heading">
-                <span>RESULT</span>
-                <h1>매물별 분석 결과를 확인하세요</h1>
-                <p>
-                  초기자금, 월 현금흐름과 1년 재무목표를 같은 기준으로
-                  확인합니다.
-                </p>
-              </div>
+              <ResultSectionHeading
+                description="주변 유사 거래와 환산 월 임대비용을 같은 기준으로 비교합니다."
+                eyebrow="01 PRICE ANALYSIS"
+                title="가격 적정성 분석"
+              />
 
-              <div className="property-tabs result-tabs" role="tablist">
+              <div
+                aria-label="가격 분석 매물 선택"
+                className="property-tabs result-tabs"
+                role="tablist"
+              >
                 {result?.candidates.map((candidate) => (
                   <button
                     aria-selected={candidate.property_id === activeId}
@@ -739,6 +758,36 @@ export function ResultsPage({
                     {candidate.name}
                   </button>
                 ))}
+              </div>
+
+              <div className="financial-analysis-heading">
+                <ResultSectionHeading
+                  description="입주 시점의 자금 상태부터 월 현금흐름과 1년 재무목표까지 확인합니다."
+                  eyebrow="02 FINANCIAL ANALYSIS"
+                  title="재무 적정성 분석"
+                />
+                <div
+                  aria-label="재무 분석 매물 선택"
+                  className="property-tabs result-tabs"
+                  role="tablist"
+                >
+                  {result?.candidates.map((candidate) => (
+                    <button
+                      aria-selected={candidate.property_id === activeId}
+                      className={
+                        candidate.property_id === activeId
+                          ? 'is-active'
+                          : undefined
+                      }
+                      key={candidate.property_id}
+                      onClick={() => setActiveId(candidate.property_id)}
+                      role="tab"
+                      type="button"
+                    >
+                      {candidate.name}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {activeCandidate.memo ? (
@@ -917,7 +966,7 @@ export function ResultsPage({
                 <div className="price-analysis__header">
                   <div>
                     <span>PRICE ANALYSIS</span>
-                    <h2>가격 적정성 분석</h2>
+                    <h2>환산 월 임대비용 비교</h2>
                   </div>
                   <span
                     className={`result-status ${
@@ -1022,6 +1071,111 @@ export function ResultsPage({
                   </ul>
                 </div>
               ) : null}
+
+              <section className="result-ai-analysis">
+                <ResultSectionHeading
+                  description="가격과 재무 분석 결과를 함께 살펴보고, 선택 전 확인할 점을 정리합니다."
+                  eyebrow="03 AI ANALYSIS"
+                  title="AI 종합 해설"
+                />
+                <div
+                  aria-label="AI 해설 매물 선택"
+                  className="property-tabs result-tabs"
+                  role="tablist"
+                >
+                  {result?.candidates.map((candidate) => (
+                    <button
+                      aria-selected={candidate.property_id === activeId}
+                      className={
+                        candidate.property_id === activeId
+                          ? 'is-active'
+                          : undefined
+                      }
+                      key={candidate.property_id}
+                      onClick={() => setActiveId(candidate.property_id)}
+                      role="tab"
+                      type="button"
+                    >
+                      {candidate.name}
+                    </button>
+                  ))}
+                </div>
+                <div className="ai-analysis-card">
+                  <div className="ai-analysis-card__heading">
+                    <span aria-hidden="true">✦</span>
+                    <h2>이 매물은 이렇게 볼 수 있어요</h2>
+                  </div>
+                  <p>
+                    {activeCandidate.price_appropriateness.status ===
+                      'available' &&
+                    (activeCandidate.price_appropriateness
+                      .difference_rate_from_median ?? 0) !== 0
+                      ? `환산 월 임대비용이 비교군 중앙값보다 ${Math.abs(activeCandidate.price_appropriateness.difference_rate_from_median ?? 0).toLocaleString('ko-KR')}% ${(activeCandidate.price_appropriateness.difference_rate_from_median ?? 0) > 0 ? '높습니다' : '낮습니다'}.`
+                      : '환산 월 임대비용이 비교군 중앙값과 비슷한 수준입니다.'}
+                    {' '}월 지출 후 실제 잔여금은{' '}
+                    {formatSignedWon(
+                      activeCandidate.monthly_cash_flow.actual_monthly_balance,
+                    )}
+                    이며, 1년 재무목표 달성률은{' '}
+                    {activeCandidate.annual_goal.annual_goal_achievement_rate.toLocaleString(
+                      'ko-KR',
+                    )}
+                    %입니다.
+                  </p>
+                  <div className="ai-analysis-points">
+                    <article className="ai-analysis-point ai-analysis-point--success">
+                      <h3>장점</h3>
+                      <strong>
+                        {activeCandidate.annual_goal.status !== 'below_target'
+                          ? '1년 재무목표 달성 가능'
+                          : activeCandidate.monthly_cash_flow
+                                .actual_monthly_balance >= 0
+                            ? '월 현금흐름 여유'
+                            : '확인된 재무 장점 없음'}
+                      </strong>
+                      <p>
+                        입주 후 유동자산{' '}
+                        {formatWon(
+                          activeCandidate.initial_funds
+                            .post_move_liquid_assets,
+                        )}
+                        을 확인하세요.
+                      </p>
+                    </article>
+                    <article className="ai-analysis-point ai-analysis-point--danger">
+                      <h3>부담</h3>
+                      <strong>
+                        {activeCandidate.monthly_cash_flow
+                          .actual_monthly_balance < 0
+                          ? '월 현금흐름 적자'
+                          : '가격 부담 확인'}
+                      </strong>
+                      <p>
+                        중앙값 대비 차이율{' '}
+                        {(
+                          activeCandidate.price_appropriateness
+                            .difference_rate_from_median ?? 0
+                        ).toLocaleString('ko-KR')}
+                        %입니다.
+                      </p>
+                    </article>
+                    <article className="ai-analysis-point ai-analysis-point--warning">
+                      <h3>확인할 점</h3>
+                      <strong>입지·시설 조건</strong>
+                      <p>
+                        {activeCandidate.memo
+                          ? `매물 메모: ${activeCandidate.memo}`
+                          : '가격 지표에 반영되지 않는 실제 주거 조건을 함께 확인하세요.'}
+                      </p>
+                    </article>
+                  </div>
+                  <p className="ai-analysis-disclaimer">
+                    AI는 계산 결과를 변경하거나 계약 여부를 확정하지 않으며,
+                    입력된 수치와 매물 메모를 바탕으로 비교 관점을
+                    제공합니다.
+                  </p>
+                </div>
+              </section>
             </div>
           ) : (
             <div className="page-state">
