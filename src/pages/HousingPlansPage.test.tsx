@@ -256,6 +256,84 @@ describe('HousingPlansPage', () => {
     expect(onNext).toHaveBeenCalledOnce();
   });
 
+  it('분석하기 전에 화면에 입력된 모든 매물을 서버에 저장한다', async () => {
+    const user = userEvent.setup();
+    const secondPropertyId = '53b49e66-0fa2-4e0d-aee6-2f6cbc827291';
+    const patchedIds: string[] = [];
+    const planResponse = (id: string, name: string) => ({
+      analysis_id: analysisId,
+      property_id: id,
+      name,
+      memo: null,
+      address: '부산시 동구 수정동',
+      property_type: 'officetel',
+      legal_dong_code: null,
+      exclusive_area_m2: 20,
+      housing_type: 'monthly_rent',
+      deposit: 10_000_000,
+      monthly_rent: 700_000,
+      maintenance_fee: 100_000,
+      utilities: 50_000,
+      transportation_cost: 80_000,
+      loan_plan: null,
+      additional_costs: null,
+      is_complete: true,
+      updated_at: '2026-08-02T00:00:00Z',
+    });
+
+    server.use(
+      http.get(`${apiBaseUrl}/analyses/${analysisId}/housing-plans`, () =>
+        HttpResponse.json({
+          housing_plans: [
+            { property_id: propertyId },
+            { property_id: secondPropertyId },
+          ],
+        }),
+      ),
+      http.get(
+        `${apiBaseUrl}/analyses/${analysisId}/housing-plans/:propertyId`,
+        ({ params }) => {
+          const id = String(params.propertyId);
+          return HttpResponse.json(
+            planResponse(id, id === propertyId ? '매물 1' : '매물 2'),
+          );
+        },
+      ),
+      http.patch(
+        `${apiBaseUrl}/analyses/${analysisId}/housing-plans/:propertyId`,
+        ({ params }) => {
+          const id = String(params.propertyId);
+          patchedIds.push(id);
+          return HttpResponse.json(
+            planResponse(id, id === propertyId ? '매물 1' : '매물 2'),
+          );
+        },
+      ),
+      http.post(`${apiBaseUrl}/analyses/${analysisId}/evaluation`, () =>
+        HttpResponse.json({ analysis_id: analysisId, status: 'evaluating' }),
+      ),
+    );
+
+    render(
+      <HousingPlansPage
+        analysisId={analysisId}
+        onExit={() => undefined}
+        onNext={() => undefined}
+        onPrevious={() => undefined}
+      />,
+    );
+
+    expect(await screen.findByRole('tab', { name: '매물 2' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '분석하기' }));
+
+    await waitFor(() => {
+      expect(patchedIds).toEqual(
+        expect.arrayContaining([propertyId, secondPropertyId]),
+      );
+    });
+    expect(patchedIds).toHaveLength(2);
+  });
+
   it('저장된 매물이 없으면 서버에 첫 매물 초안을 만들고 입력 폼을 표시한다', async () => {
     server.use(
       http.get(`${apiBaseUrl}/analyses/${analysisId}/housing-plans`, () =>

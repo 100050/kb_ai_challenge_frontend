@@ -24,14 +24,19 @@ describe('ResultsPage', () => {
       screen.getByRole('heading', { name: 'AI 종합 해설' }),
     ).toBeInTheDocument();
     expect(
+      screen.getByText('초기자금·비상자금·재무목표 충족'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/분석 근거 \d+개/)).not.toBeInTheDocument();
+    expect(screen.queryByText('이어서 물어볼 수 있어요')).not.toBeInTheDocument();
+    expect(
       screen.queryByRole('complementary', { name: '분석 입력 단계' }),
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: '초기자금 및 유동성' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText('초기자금과 최소 비상자금을 모두 충족합니다.'),
-    ).toBeInTheDocument();
+      screen.getAllByText('초기자금과 최소 비상자금을 모두 충족합니다.'),
+    ).toHaveLength(2);
     expect(
       screen.getByRole('heading', { name: '월 현금흐름' }),
     ).toBeInTheDocument();
@@ -56,6 +61,14 @@ describe('ResultsPage', () => {
         name: /비교군 중앙값.*현재 매물/,
       }),
     ).toBeInTheDocument();
+    expect(screen.getByText('비교군 중앙값').closest('div')).toHaveClass(
+      'is-colliding',
+      'is-left',
+    );
+    expect(screen.getByText('현재 매물').closest('div')).toHaveClass(
+      'is-colliding',
+      'is-right',
+    );
     expect(screen.getByText('비교 표본 128건')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: '가격 백분위 설명' }),
@@ -251,6 +264,9 @@ describe('ResultsPage', () => {
     );
 
     expect(await screen.findAllByText('역삼 원룸')).toHaveLength(1);
+    expect(
+      screen.getByText(/AI 종합 해설을 생성하지 못했습니다/),
+    ).toBeInTheDocument();
     expect(screen.getAllByText('초기자금 부족').length).toBeGreaterThan(0);
     expect(screen.getByText('목표 없음')).toBeInTheDocument();
     expect(

@@ -379,18 +379,25 @@ export function HousingPlansPage({
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!activePlan) {
+    if (plans.length === 0) {
       setError('후보 매물을 추가해 주세요.');
       return;
     }
-    if (
-      !activePlan.name ||
-      !activePlan.city ||
-      !activePlan.district ||
-      !activePlan.neighborhood ||
-      !activePlan.housingType
-    ) {
-      setError('매물 이름, 시·구·동과 계약 유형을 입력해 주세요.');
+
+    const incompletePlan = plans.find(
+      (plan) =>
+        !plan.name ||
+        !plan.city ||
+        !plan.district ||
+        !plan.neighborhood ||
+        !plan.housingType,
+    );
+    if (incompletePlan) {
+      setActiveId(incompletePlan.propertyId);
+      const planNumber = plans.indexOf(incompletePlan) + 1;
+      setError(
+        `매물 ${planNumber}의 매물 이름, 시·구·동과 계약 유형을 입력해 주세요.`,
+      );
       return;
     }
 
@@ -399,17 +406,16 @@ export function HousingPlansPage({
     setError('');
     try {
       if (analysisId) {
-        const saved = await updateHousingPlan(
-          analysisId,
-          activePlan.propertyId,
-          valuesToRequest(activePlan),
-        );
-        const savedValues = planToValues(saved);
-        setPlans((current) =>
-          current.map((plan) =>
-            plan.propertyId === savedValues.propertyId ? savedValues : plan,
+        const savedPlans = await Promise.all(
+          plans.map((plan) =>
+            updateHousingPlan(
+              analysisId,
+              plan.propertyId,
+              valuesToRequest(plan),
+            ),
           ),
         );
+        setPlans(savedPlans.map(planToValues));
         await startEvaluation(analysisId);
       }
       onNext();

@@ -165,6 +165,23 @@ export interface AnalysisCandidateResult {
     samples: PriceComparisonSample[];
     reason: string | null;
   };
+  ai_interpretation?: {
+    summary: string[];
+    strengths: {
+      title: string;
+      detail: string;
+    };
+    burdens: {
+      title: string;
+      detail: string;
+    };
+    things_to_check: {
+      title: string;
+      detail: string;
+    };
+    evidence_count: number;
+    suggested_questions: string[];
+  } | null;
   calculation_details: unknown;
   warnings: Array<{
     code: string;

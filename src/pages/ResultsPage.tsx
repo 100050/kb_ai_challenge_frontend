@@ -111,8 +111,8 @@ const previewResult: AnalysisResult = {
         sample_count: 128,
         comparison_mode: 'median',
         median_equivalent_monthly_cost: 880_000,
-        difference_from_median: 50_000,
-        difference_rate_from_median: 5.68,
+        difference_from_median: 10_000,
+        difference_rate_from_median: 1.14,
         price_percentile: 72.2,
         candidate_equivalent_monthly_cost: null,
         comparison_criteria: {
@@ -123,6 +123,27 @@ const previewResult: AnalysisResult = {
         },
         samples: [],
         reason: null,
+      },
+      ai_interpretation: {
+        summary: [
+          '환산 월 임대비용은 비교군 중앙값과 비슷한 수준입니다.',
+          '초기자금과 최소 비상자금을 모두 충족합니다.',
+          '현재 조건이 유지되면 1년 재무목표 달성이 예상됩니다.',
+        ],
+        strengths: {
+          title: '초기자금·비상자금·재무목표 충족',
+          detail: '입주 후 유동자산과 재무목표 달성률이 안정적입니다.',
+        },
+        burdens: {
+          title: '월 주거비 확인 필요',
+          detail: '현재 월 현금흐름에서 주거비가 차지하는 비중을 확인하세요.',
+        },
+        things_to_check: {
+          title: '정성적 주거 조건 확인',
+          detail: '매물 메모: 역세권, 엘리베이터 있음',
+        },
+        evidence_count: 6,
+        suggested_questions: ['왜 가격 부담이 높나요?', '월세가 오르면 어떻게 되나요?'],
       },
       calculation_details: null,
       warnings: [],
@@ -165,6 +186,7 @@ const previewResult: AnalysisResult = {
         samples: [],
         reason: '가격 비교에 필요한 매물 정보가 부족합니다.',
       },
+      ai_interpretation: null,
       calculation_details: null,
       warnings: [],
     },
@@ -233,6 +255,26 @@ const previewResult: AnalysisResult = {
           },
         ],
         reason: null,
+      },
+      ai_interpretation: {
+        summary: [
+          '표본 거래와 내 매물을 직접 비교할 수 있습니다.',
+          '현재 재무 기준을 모두 충족합니다.',
+        ],
+        strengths: {
+          title: '충분한 입주 후 유동자산',
+          detail: '초기 입주비용을 지출한 뒤에도 유동자산이 남습니다.',
+        },
+        burdens: {
+          title: '실거래 표본 직접 확인 필요',
+          detail: '표본 수가 적으므로 개별 거래 조건을 확인하세요.',
+        },
+        things_to_check: {
+          title: '현장 채광 확인',
+          detail: '매물 메모: 채광 좋음',
+        },
+        evidence_count: 5,
+        suggested_questions: ['표본 거래와 차이를 정리해줘'],
       },
       calculation_details: null,
       warnings: [],
@@ -330,8 +372,12 @@ function PriceComparisonChart({
   const range = Math.max(maximum - minimum, maximum * 0.12, 1);
   const scaleMin = Math.max(0, minimum - range * 0.65);
   const scaleMax = maximum + range * 0.65;
-  const position = (value: number) =>
-    `${((value - scaleMin) / (scaleMax - scaleMin)) * 100}%`;
+  const positionValue = (value: number) =>
+    ((value - scaleMin) / (scaleMax - scaleMin)) * 100;
+  const position = (value: number) => `${positionValue(value)}%`;
+  const labelsAreClose =
+    Math.abs(positionValue(candidateCost) - positionValue(medianCost)) < 24;
+  const medianIsLeft = medianCost <= candidateCost;
   const difference = candidateCost - medianCost;
   const differenceRate = medianCost === 0 ? 0 : (difference / medianCost) * 100;
 
@@ -343,14 +389,14 @@ function PriceComparisonChart({
       <figcaption className="sr-only">환산 월 임대비용 비교</figcaption>
       <div className="price-chart__labels">
         <div
-          className="price-chart__label price-chart__label--median"
+          className={`price-chart__label price-chart__label--median${labelsAreClose ? ` is-colliding ${medianIsLeft ? 'is-left' : 'is-right'}` : ''}`}
           style={{ left: position(medianCost) }}
         >
           <span>비교군 중앙값</span>
           <strong>{formatWon(medianCost)}</strong>
         </div>
         <div
-          className="price-chart__label price-chart__label--candidate"
+          className={`price-chart__label price-chart__label--candidate${labelsAreClose ? ` is-colliding ${medianIsLeft ? 'is-right' : 'is-left'}` : ''}`}
           style={{ left: position(candidateCost) }}
         >
           <span>현재 매물</span>
@@ -1371,73 +1417,55 @@ export function ResultsPage({
                     <span aria-hidden="true">✦</span>
                     <h2>이 매물은 이렇게 볼 수 있어요</h2>
                   </div>
-                  <p>
-                    {activeCandidate.price_appropriateness.status ===
-                      'available' &&
-                    (activeCandidate.price_appropriateness
-                      .difference_rate_from_median ?? 0) !== 0
-                      ? `환산 월 임대비용이 비교군 중앙값보다 ${Math.abs(activeCandidate.price_appropriateness.difference_rate_from_median ?? 0).toLocaleString('ko-KR')}% ${(activeCandidate.price_appropriateness.difference_rate_from_median ?? 0) > 0 ? '높습니다' : '낮습니다'}.`
-                      : '환산 월 임대비용이 비교군 중앙값과 비슷한 수준입니다.'}
-                    {' '}월 지출 후 실제 잔여금은{' '}
-                    {formatSignedWon(
-                      activeCandidate.monthly_cash_flow.actual_monthly_balance,
-                    )}
-                    이며,{' '}
-                    {activeCandidate.annual_goal
-                      .annual_goal_achievement_rate === null
-                      ? '설정한 1년 재무목표는 없습니다.'
-                      : `1년 재무목표 달성률은 ${activeCandidate.annual_goal.annual_goal_achievement_rate.toLocaleString('ko-KR')}%입니다.`}
-                  </p>
-                  <div className="ai-analysis-points">
-                    <article className="ai-analysis-point ai-analysis-point--success">
-                      <h3>장점</h3>
-                      <strong>
-                        {activeCandidate.annual_goal
-                          .annual_goal_achievement_rate === null
-                          ? '월 현금흐름 확인 가능'
-                          : activeCandidate.annual_goal.status !== 'below_target'
-                          ? '1년 재무목표 달성 가능'
-                          : activeCandidate.monthly_cash_flow
-                                .actual_monthly_balance >= 0
-                            ? '월 현금흐름 여유'
-                            : '확인된 재무 장점 없음'}
-                      </strong>
-                      <p>
-                        입주 후 유동자산{' '}
-                        {formatWon(
-                          activeCandidate.initial_funds
-                            .post_move_liquid_assets,
+                  {activeCandidate.ai_interpretation ? (
+                    <>
+                      <div className="ai-analysis-summary">
+                        {activeCandidate.ai_interpretation.summary.map(
+                          (summary) => <p key={summary}>{summary}</p>,
                         )}
-                        을 확인하세요.
-                      </p>
-                    </article>
-                    <article className="ai-analysis-point ai-analysis-point--danger">
-                      <h3>부담</h3>
-                      <strong>
-                        {activeCandidate.monthly_cash_flow
-                          .actual_monthly_balance < 0
-                          ? '월 현금흐름 적자'
-                          : '가격 부담 확인'}
-                      </strong>
-                      <p>
-                        중앙값 대비 차이율{' '}
-                        {(
-                          activeCandidate.price_appropriateness
-                            .difference_rate_from_median ?? 0
-                        ).toLocaleString('ko-KR')}
-                        %입니다.
-                      </p>
-                    </article>
-                    <article className="ai-analysis-point ai-analysis-point--warning">
-                      <h3>확인할 점</h3>
-                      <strong>입지·시설 조건</strong>
-                      <p>
-                        {activeCandidate.memo
-                          ? `매물 메모: ${activeCandidate.memo}`
-                          : '가격 지표에 반영되지 않는 실제 주거 조건을 함께 확인하세요.'}
-                      </p>
-                    </article>
-                  </div>
+                      </div>
+                      <div className="ai-analysis-points">
+                        <article className="ai-analysis-point ai-analysis-point--success">
+                          <h3>장점</h3>
+                          <strong>
+                            {activeCandidate.ai_interpretation.strengths.title}
+                          </strong>
+                          <p>
+                            {activeCandidate.ai_interpretation.strengths.detail}
+                          </p>
+                        </article>
+                        <article className="ai-analysis-point ai-analysis-point--danger">
+                          <h3>부담</h3>
+                          <strong>
+                            {activeCandidate.ai_interpretation.burdens.title}
+                          </strong>
+                          <p>
+                            {activeCandidate.ai_interpretation.burdens.detail}
+                          </p>
+                        </article>
+                        <article className="ai-analysis-point ai-analysis-point--warning">
+                          <h3>확인할 점</h3>
+                          <strong>
+                            {
+                              activeCandidate.ai_interpretation.things_to_check
+                                .title
+                            }
+                          </strong>
+                          <p>
+                            {
+                              activeCandidate.ai_interpretation.things_to_check
+                                .detail
+                            }
+                          </p>
+                        </article>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="ai-analysis-unavailable">
+                      AI 종합 해설을 생성하지 못했습니다. 가격 적정성과 재무
+                      분석 결과는 정상적으로 확인할 수 있습니다.
+                    </p>
+                  )}
                   <p className="ai-analysis-disclaimer">
                     AI는 계산 결과를 변경하거나 계약 여부를 확정하지 않으며,
                     입력된 수치와 매물 메모를 바탕으로 비교 관점을

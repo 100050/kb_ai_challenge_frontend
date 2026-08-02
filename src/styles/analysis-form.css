@@ -679,6 +679,17 @@ label[for="recoverable-deposit"] {
   line-height: 1.75;
 }
 
+.ai-analysis-summary {
+  margin: 18px 0;
+}
+
+.ai-analysis-summary p {
+  margin: 8px 0;
+  color: var(--color-neutral-800);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
 .ai-analysis-points {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -731,6 +742,12 @@ label[for="recoverable-deposit"] {
   color: var(--color-neutral-700);
   background: var(--color-neutral-100);
   font-size: 12px;
+}
+
+.ai-analysis-card p.ai-analysis-unavailable {
+  padding: 18px;
+  border-radius: var(--radius-small);
+  background: var(--color-neutral-100);
 }
 
 .result-warning {
@@ -1088,6 +1105,18 @@ label[for="recoverable-deposit"] {
   transform: translateX(-50%);
   font-size: 12px;
   text-align: center;
+}
+
+.price-chart__label.is-colliding.is-left {
+  padding-right: 12px;
+  transform: translateX(-100%);
+  text-align: right;
+}
+
+.price-chart__label.is-colliding.is-right {
+  padding-left: 12px;
+  transform: translateX(0);
+  text-align: left;
 }
 
 .price-chart__label span {
