@@ -918,7 +918,7 @@ export function ResultsPage({
                 <ResultSectionHeading
                   description="입주 시점의 자금 상태부터 월 현금흐름과 1년 재무목표까지 확인합니다."
                   eyebrow="02 FINANCIAL ANALYSIS"
-                  title="재무 적정성 분석"
+                  title="재무 적합성 분석"
                 />
               </div>
 
